@@ -1,0 +1,14 @@
+model,feature,code,code_system,type_of_data,data_alive_time,default_value
+diabetes,glucose,72-314,https://www.cgmh.org.tw,observation,0005-00-00T00:00:00,
+diabetes,diastolic blood pressure,8462-4,,observation,0005-00-00T00:00:00,
+diabetes,insulin,72-496,https://www.cgmh.org.tw,observation,0005-00-00T00:00:00,
+diabetes,insulin,72-49B,https://www.cgmh.org.tw,observation,0005-00-00T00:00:00,
+diabetes,weight,29463-7,http://loinc.org,observation,0005-00-00T00:00:00,
+diabetes,height,8302-2,http://loinc.org,observation,0005-00-00T00:00:00,
+diabetes,hypertension,I10,,condition,0005-00-00T00:00:00,
+qcsi,respiratory rate,OA04,https://www.cgmh.org.tw,observation,0000-00-02T00:00:00,
+qcsi,pulse oximetry,OA08,https://www.cgmh.org.tw,observation,0000-00-02T00:00:00,
+qcsi,o2 flow rate,3151-8,http://loinc.org,observation,0000-00-02T00:00:00,
+rox,spo2,OA08,https://www.cgmh.org.tw,observation,0000-00-02T12:00:00,
+rox,respiratory rate,OA04,https://www.cgmh.org.tw,observation,0000-00-02T12:00:00,
+rox,fio2,3151-8,http://loinc.org,observation,0000-00-02T12:00:00,21
