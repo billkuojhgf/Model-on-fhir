@@ -1,69 +1,75 @@
 import csv
+import importlib
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from base.feature import *
-from base.patient_data_search import *
+from base import FeatureTable
+from base import patient_data_search as ds
 from models import *
 
 app = Flask(__name__)
 CORS(app)
 
 # Map the csv into dictionary
-table = createTable()
+table = FeatureTable.FeatureTable("./config/features.csv")
 
 
 @app.route('/', methods=['GET'])
 def index():
-    return "Hello, World!<br/><br/>請在網址列的/後面輸入你要搜尋的病患id即可得出結果<br/>Example: <a href=\"/diabetes?id=test-03121002\">http://localhost:5000/diabetes?id=test-03121002</a>"
+    return "Hello, World!<br/><br/>請在網址列的/後面輸入你要搜尋的病患id即可得出結果<br/>Example: <a " \
+           "href=\"/diabetes?id=test-03121002\">http://localhost:5000/diabetes?id=test-03121002</a> "
 
 
 @app.route('/<api>', methods=['GET'])
 def api_with_id(api):
-    if api == 'diabetes':
-        if request.values.get('id'):
-            id = request.values.get('id')
-            yearsAliveTime = request.values.get(
-                'yearAliveTime') if request.values.get('yearAliveTime') == True else 5
-            dataAliveTime['years'] = yearsAliveTime
-            diabetes.model.predict()
-            return jsonify(diabetes_predict(id, table['diabetes'], dataAliveTime)), 200
+    """
 
-    elif api == 'qcsi':
-        if request.values.get('id'):
-            id = request.values.get('id')
-            hour_alive = request.values.get('hourAliveTime') if request.values.get(
-                'hourAliveTime') == True else 24
-            dataAliveTime['hours'] = hour_alive
-            return jsonify(qcsi_calc_with_patient_id(id, table['qcsi'], dataAliveTime)), 200
+    :param api:<base>/<model name>?id=<patient's id>&hour_alive_format
+    :return:
+    """
+    try:
+        request.values.get('id')
+    except Exception as e:
+        return "Missing value of patient's id", 500
+    else:
+        patient_id = request.values.get('id')
 
-    elif api == 'rox':
-        if request.values.get('id'):
-            id = request.values.get('id')
-            hour_alive = request.values.get('hourAliveTime') if request.values.get(
-                'hourAliveTime') == True else 24
-            dataAliveTime['hours'] = hour_alive
-            return jsonify(rox_index_calc_with_patient_id(id, table['rox'], dataAliveTime)), 200
-    return "", 404
+    try:
+        patient_data_dict = ds.model_feature_search_with_patient_id(
+            patient_id, table.get_model_feature_dict(api), api)
+        model_results = getattr(eval("{}".format(api)), "predict")(patient_data_dict)
+    except NameError as e:
+        return "Model does not exist.", 500
+    else:
+        patient_data_dict["predict_value"] = model_results
+        return patient_data_dict
 
 
 @app.route('/<api>/change', methods=['POST'])
 # POST method will get the object body from frontend
 # POST method will only return predict value(double or integer)
 def api_with_post(api):
-    request_dict = request.get_json()
-    if api == 'diabetes':
-        predict_value = diabetes_model_result(request_dict)
-    elif api == 'qcsi':
-        predict_value = qcsi_calc_with_score(request_dict)
-    elif api == 'rox':
-        predict_value = rox_index_calc_with_score(request_dict)
-    else:
-        return "", 404
+    request_data_dict = request.get_json()
+    # if api == 'diabetes':
+    #     predict_value = diabetes_model_result(request_dict)
+    # elif api == 'qcsi':
+    #     predict_value = qcsi_calc_with_score(request_dict)
+    # elif api == 'rox':
+    #     predict_value = rox_index_calc_with_score(request_dict)
+    # else:
 
-    return {"predict_value": predict_value}, 200
+    # return "", 404
+    try:
+        return getattr(eval("{}".format(api)), "predict")(request_data_dict)
+    except Exception as e:
+        return e, 404
+
+
+def main():
+    print(getattr(eval('diabetes'), 'predict')())
 
 
 if __name__ == '__main__':
     app.debug = True
     app.run()
+    # main()

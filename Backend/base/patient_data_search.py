@@ -1,12 +1,12 @@
 import datetime
-from base.searchsets import *
+from base.searchsets import *  # fs: fhir server search
 
 
 def model_feature_search_with_patient_id(id, table, model_name):
     default_time = datetime.datetime.now()
 
     data = dict()
-    for key in table[model_name]:
+    for key in table:
         data[key] = dict()
         data[key] = get_resources(id, table[key], default_time)
 
