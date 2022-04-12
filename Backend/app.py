@@ -1,6 +1,6 @@
 import csv
 import importlib
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
 
 from base import FeatureTable
@@ -27,19 +27,20 @@ def api_with_id(api):
     :param api:<base>/<model name>?id=<patient's id>&hour_alive_format
     :return:
     """
-    try:
-        request.values.get('id')
-    except Exception as e:
-        return "Missing value of patient's id", 500
+    if request.values.get('id') is None:
+        abort(400, description="Please fill in patient's ID.")
     else:
         patient_id = request.values.get('id')
 
     try:
         patient_data_dict = ds.model_feature_search_with_patient_id(
             patient_id, table.get_model_feature_dict(api), api)
-        model_results = getattr(eval("{}".format(api)), "predict")(patient_data_dict)
-    except NameError as e:
-        return "Model does not exist.", 500
+        model_results = getattr(eval("{}".format(api)),
+                                "predict")(patient_data_dict)
+    except KeyError:
+        abort(400, description="Model was not found in system.")
+    except Exception as e:
+        abort(500, description=e)
     else:
         patient_data_dict["predict_value"] = model_results
         return patient_data_dict
@@ -49,7 +50,7 @@ def api_with_id(api):
 # POST method will get the object body from frontend
 # POST method will only return predict value(double or integer)
 def api_with_post(api):
-    request_data_dict = request.get_json()
+    patient_data_dict = request.get_json()
     # if api == 'diabetes':
     #     predict_value = diabetes_model_result(request_dict)
     # elif api == 'qcsi':
@@ -60,9 +61,15 @@ def api_with_post(api):
 
     # return "", 404
     try:
-        return getattr(eval("{}".format(api)), "predict")(request_data_dict)
+        model_results = getattr(eval("{}".format(api)),
+                                "predict")(patient_data_dict)
+    except KeyError:
+        abort(400, description="Model was not found in system.")
     except Exception as e:
-        return e, 404
+        abort(500, description=e)
+    else:
+        patient_data_dict["predict_value"] = model_results
+        return patient_data_dict
 
 
 def main():
