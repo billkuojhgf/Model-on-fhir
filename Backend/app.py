@@ -68,7 +68,23 @@ def main():
     print(globals()["diabetes"].predict())
 
 
+def import_model():
+    # get a handle on the module
+    mdl = importlib.import_module('models')
+
+    # is there an __all__?  if so respect it
+    if "__all__" in mdl.__dict__:
+        names = mdl.__dict__["__all__"]
+    else:
+        # otherwise we import all names that don't begin with _
+        names = [x for x in mdl.__dict__ if not x.startswith("_")]
+
+    # now drag them in
+    globals().update({k: getattr(mdl, k) for k in names})
+
+
 if __name__ == '__main__':
     # main()
+    import_model()
     app.debug = True
     app.run()
