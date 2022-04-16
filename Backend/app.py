@@ -41,7 +41,7 @@ def api_with_id(api):
     except Exception as e:
         abort(500, description=e)
     else:
-        return return_model_result(patient_data_dict, api)
+        return jsonify(return_model_result(patient_data_dict, api))
 
 
 @app.route('/<api>/change', methods=['POST'])
@@ -49,7 +49,7 @@ def api_with_id(api):
 # POST method will only return predict value(double or integer)
 def api_with_post(api):
     patient_data_dict = request.get_json()
-    return return_model_result(patient_data_dict, api)
+    return jsonify(return_model_result(patient_data_dict, api))
 
 
 def return_model_result(patient_data_dict, api):
