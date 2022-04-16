@@ -10,6 +10,8 @@ class FeatureTable:
 
     @classmethod
     def __create_table(cls, feature_table_position):
+        # TODO: 感覺這裡的feature_table_file需要做點更改。
+        #  以後的feature table應該會有更多的欄位在裡面，如果每次都要修改程式碼會挺蠢的，縱使不會用到但至少要防微杜漸吧
         table = {}
         with open(feature_table_position, newline='') as feature_table_file:
             rows = csv.DictReader(feature_table_file)

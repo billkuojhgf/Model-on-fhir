@@ -8,7 +8,10 @@ def model_feature_search_with_patient_id(id, table, model_name):
     data = dict()
     for key in table:
         data[key] = dict()
-        data[key] = get_resources(id, table[key], default_time)
+        try:
+            data[key] = get_resources(id, table[key], default_time)
+        except ResourceNotFound:
+            data[key] = table['']
 
     result_dict = dict()
     for key in data:

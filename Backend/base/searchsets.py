@@ -5,7 +5,8 @@ from fhirpy.base.searchset import *
 from fhirpy.base.exceptions import ResourceNotFound
 from dateutil.relativedelta import relativedelta
 
-CLIENT = SyncFHIRClient('http://localhost:8080/fhir')
+localhost = r"192.168.0.101"
+CLIENT = SyncFHIRClient('http://{localhost}:8080/fhir'.format(localhost=localhost))
 
 
 def get_resources(patient_id, table, default_time, data_alive_time=None):
