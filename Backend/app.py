@@ -42,8 +42,7 @@ def api_with_id(api):
     except Exception as e:
         abort(500, description=e)
     else:
-        patient_data_dict["predict_value"] = model_results
-        return patient_data_dict
+        return jsonify(return_model_result(patient_data_dict, api))
 
 
 @app.route('/<api>/change', methods=['POST'])
@@ -51,15 +50,10 @@ def api_with_id(api):
 # POST method will only return predict value(double or integer)
 def api_with_post(api):
     patient_data_dict = request.get_json()
-    # if api == 'diabetes':
-    #     predict_value = diabetes_model_result(request_dict)
-    # elif api == 'qcsi':
-    #     predict_value = qcsi_calc_with_score(request_dict)
-    # elif api == 'rox':
-    #     predict_value = rox_index_calc_with_score(request_dict)
-    # else:
+    return jsonify(return_model_result(patient_data_dict, api))
 
-    # return "", 404
+
+def return_model_result(patient_data_dict, api):
     try:
         model_results = getattr(eval("{}".format(api)),
                                 "predict")(patient_data_dict)
@@ -74,6 +68,21 @@ def api_with_post(api):
 
 def main():
     print(getattr(eval('diabetes'), 'predict')())
+
+
+def import_model():
+    # get a handle on the module
+    mdl = importlib.import_module('models')
+
+    # is there an __all__?  if so respect it
+    if "__all__" in mdl.__dict__:
+        names = mdl.__dict__["__all__"]
+    else:
+        # otherwise we import all names that don't begin with _
+        names = [x for x in mdl.__dict__ if not x.startswith("_")]
+
+    # now drag them in
+    globals().update({k: getattr(mdl, k) for k in names})
 
 
 if __name__ == '__main__':
