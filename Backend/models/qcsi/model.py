@@ -2,11 +2,8 @@ import datetime
 from base.searchsets import *
 
 
-def predict(patient_data_dict: dict):
-    result_dict = patient_data_dict
-    result_dict = convert_qcsi_value(result_dict)
-    result_dict['predict_value'] = qcsi_model_result(result_dict)
-    return result_dict
+def predict():
+    return
 
 
 # qCSI Patient's id api
