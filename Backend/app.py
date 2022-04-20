@@ -35,8 +35,6 @@ def api_with_id(api):
     try:
         patient_data_dict = ds.model_feature_search_with_patient_id(
             patient_id, table.get_model_feature_dict(api), api)
-        model_results = getattr(eval("{}".format(api)),
-                                "predict")(patient_data_dict)
     except KeyError:
         abort(400, description="Model was not found in system.")
     except Exception as e:
@@ -55,8 +53,7 @@ def api_with_post(api):
 
 def return_model_result(patient_data_dict, api):
     try:
-        model_results = getattr(eval("{}".format(api)),
-                                "predict")(patient_data_dict)
+        model_results = globals()[api].predict(patient_data_dict)
     except KeyError:
         abort(400, description="Model was not found in system.")
     except Exception as e:
