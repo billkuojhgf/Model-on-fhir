@@ -38,7 +38,7 @@ def predict(data: dict):
     # controlled variable: glucose, diastolic blood pressure, insulin, height, weight, age
 
     # TODO: get_age要重做，想一個好的辦法來處理這種例外情節
-    temp = [6, data['glucose']['value'], data['diastolic blood pressure']['value'], 35, data['insulin']['value'],
+    temp = [6, data['glucose']['value'], data['diastolic_blood_pressure']['value'], 35, data['insulin']['value'],
             bmi(data['height']['value'], data['weight']['value']), 0.627, 72]
     loaded_model = joblib.load("./models/diabetes/finalized_model.sav")
     x.append(temp)

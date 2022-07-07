@@ -73,11 +73,11 @@ def get_resources(patient_id, table, default_time, data_alive_time=None):
         raise Exception('unknown type of data')
 
 
-def get_age(id, default_time):
+def get_age(patient_id, default_time):
     # TODO: 把取得Patient資料的這個流程加入到get_resources中
     # Getting patient data from server
     resources = CLIENT.resources('Patient')
-    resources = resources.search(_id=id).limit(1)
+    resources = resources.search(_id=patient_id).limit(1)
     patient = resources.get()
     patient_birthdate = datetime.datetime.strptime(
         patient.birthDate, '%Y-%m-%d')

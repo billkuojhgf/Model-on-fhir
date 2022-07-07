@@ -1,10 +1,16 @@
 import os
 import csv
 import importlib
-from flask import Flask, jsonify, request, abort
-from flask_cors import CORS
+import configparser
 
-from base import FeatureTable
+from flask import Flask
+from flask import jsonify
+from flask import request
+from flask import abort
+from flask_cors import CORS
+from munch import DefaultMunch
+# TODO: munch可以將dictionary轉成Object，日後可能會用到
+from base import feature_table
 from base import patient_data_search as ds
 from models import *
 
@@ -12,7 +18,9 @@ app = Flask(__name__)
 CORS(app)
 
 # Map the csv into dictionary
-table = FeatureTable.FeatureTable("./config/features.csv")
+config = configparser.ConfigParser()
+config.read("./config.ini")
+table = feature_table.FeatureTable(config['table_path']['FEATURE_TABLE'])
 
 
 @app.route('/', methods=['GET'])
@@ -24,70 +32,82 @@ def index():
 @app.route('/<api>', methods=['GET'])
 def api_with_id(api):
     """
+    Description:
+        This api gets the request with patient's id and model, then the server would return the model's result
+        and patient's data.
 
     :param api:<base>/<model name>?id=<patient's id>&hour_alive_format
-    :return:
+    :return: json object
+        {
+            "predict_value": <int> or <double>
+            "<feature's name>": {
+                "date": YYYY-MM-DDThh:mm:ss,
+                "value": <boolean> or <int> or <double> or <string> // depends on the data
+            }
+        }
     """
+    # TODO: the hour_alive_time request value
     if request.values.get('id') is None:
         abort(400, description="Please fill in patient's ID.")
-    else:
-        patient_id = request.values.get('id')
+    patient_id = request.values.get('id')
+    hour_alive_time = None
+    if request.values.get('data_alive_time') is not None:
+        hour_alive_time = request.values.get('hour_alive_time')
 
+    patient_data_dictionary = ds.model_feature_search_with_patient_id(
+        patient_id, table.get_model_feature_dict(api), None, hour_alive_time)
+    print(patient_data_dictionary)
+    patient_data_dictionary["predict_value"] = return_model_result(patient_data_dictionary, api)
+    return jsonify(patient_data_dictionary)
+
+
+def verify_data(patient_data_dict, api):
+    # MUST HAVE: 1. Keys with each feature. 2. Value with Dict type and has Key with the name "value".
     try:
-        patient_data_dict = ds.model_feature_search_with_patient_id(
-            patient_id, table.get_model_feature_dict(api), api)
+        validation_table = table.get_model_feature_dict(api)
     except KeyError:
-        abort(400, description="Model was not found in system.")
-    except Exception as e:
-        abort(500, description=e)
-    else:
-        return jsonify(return_model_result(patient_data_dict, api))
+        raise KeyError("{} Model is not in the table".format(api))
+
+    for key in validation_table.keys():
+        if key not in patient_data_dict.keys():
+            raise KeyError("{} was not given".format(key))
+
+        if "value" not in patient_data_dict[key].keys():
+            raise KeyError("{}'s value has no 'value' key.".format(key))
 
 
 @app.route('/<api>/change', methods=['POST'])
 # POST method will get the object body from frontend
 # POST method will only return predict value(double or integer)
 def api_with_post(api):
+    """
+    Description:
+        This api gets the request with patient's data and model, then the server would return the model's result
+        and patient's data.
+
+    :param api: POST <base>/<model name>/change
+    :return: json object
+        {
+            "predict_value": <int> or <double>
+            "<feature's name>": {
+                "date": YYYY-MM-DDThh:mm:ss,
+                "value": <boolean> or <int> or <double> or <string> // depends on the data
+            }
+        }
+    """
     patient_data_dict = request.get_json()
-    return jsonify(return_model_result(patient_data_dict, api))
+    verify_data(patient_data_dict, api)
+    print(patient_data_dict)
+    patient_data_dict["predict_value"] = return_model_result(patient_data_dict, api)
+    return jsonify(patient_data_dict)
 
 
 def return_model_result(patient_data_dict, api):
-    try:
-        model_results = globals()[api].predict(patient_data_dict)
-    except KeyError:
-        abort(400, description="Model was not found in system.")
-    except Exception as e:
-        abort(500, description=e)
-    else:
-        patient_data_dict["predict_value"] = model_results
-        return patient_data_dict
-
-
-def main():
-    names = []
-    model_path = r"./models"
-    for model_path_dir in os.listdir(model_path):
-        # 阻絕 "__pycache__" folder
-        if model_path_dir.startswith("_"):
-            continue
-
-        # 判斷該資料夾是否為 *符合條件* 的model
-        """
-            符合條件：
-            欲新增的model都應該需要符合以下條件：
-            1. folder名稱就是model的名稱
-            2. 裡面有predict() function，負責做該model的predict，input attribute為patient_data_dict <type: dictionary>
-            3. 該model會預設從model.py中去抓取predict function (方法： 預設是＿＿init__.py裡面會寫"from .model import predict")
-               如果predict function不在model.py中，則需要修改__init__.py中的路徑
-        """
-        if os.path.isdir("{}/{}".format(model_path, model_path_dir)) and \
-                os.path.exists("{}/{}/model.py".format(model_path, model_path_dir)):
-            names.append(model_path_dir)
-
-    models_init_file = open("./models/__init__.py", "w")
-    models_init_file.write("__all__ = {}".format(names))
-    models_init_file.close()
+    """
+        Function return_model_result會對 model執行 predict的動作，回傳 model的結果
+    """
+    model_results = globals()[api].predict(patient_data_dict)
+    return model_results
 
 
 def import_model():
@@ -105,9 +125,8 @@ def import_model():
     globals().update({k: getattr(mdl, k) for k in names})
 
 
-if __name__ == '__main__':
-    main()
-    import_model()
+import_model()
+
+if __name__ == "__main__":
     app.debug = True
     app.run()
-

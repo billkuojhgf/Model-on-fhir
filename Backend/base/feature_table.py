@@ -11,40 +11,47 @@ class FeatureTable:
     @classmethod
     def __create_table(cls, feature_table_position):
         table = {}
+        special_field_sets = ('model', "feature", "code", "code_system", "data_alive_time")
         with open(feature_table_position, newline='') as feature_table_file:
             rows = csv.DictReader(feature_table_file)
             for row in rows:
+                # 新建以model name 為key 的Dictionary value
                 if row['model'] not in table:
                     table[row['model']] = {}
+                # 在model name 的Dictionary 裡新建一個以feature name 為key 的Dictionary value
                 if row['feature'] not in table[row['model']]:
                     table[row['model']][row['feature']] = {}
 
-                # 處理code的變數內容，如果有code system就再新增進去
+                # 處理code 的變數內容，如果有code system 就再新增進去
                 code = row['code']
                 if row['code_system'] != '':
                     code = "{}|{}".format(row['code_system'], row['code'])
-                # 如果code變數內沒內容
-                if code == '':
+
+                # 如果code 變數內沒內容
+                if code == '' and row["type_of_data"] != "patient":
                     raise FeatureCodeIsEmpty(row['feature'])
-                # Feature有兩種以上的code
+
+                # Feature 有兩種以上的code
                 if 'code' in table[row['model']][row['feature']]:
                     table[row['model']][row['feature']]['code'] = table[row['model']][row['feature']]['code'] \
-                        + ",{}".format(code)
+                                                                  + ",{}".format(code)
                 else:
                     table[row['model']][row['feature']]['code'] = code
 
-                table[row['model']][row['feature']
-                                    ]['type'] = row['type_of_data']
-                table[row['model']][row['feature']]['feature'] = row['feature']
-
                 table[row['model']][row['feature']]['data_alive_time'] = DataAliveTime(
                     row['data_alive_time'])
-                table[row['model']][row['feature']
-                                    ]['default_value'] = row['default_value']
+                # 剩餘的key value就用迴圈建立，因為沒什麼特別的了
+                for key, value in row.items():
+                    if key not in special_field_sets:
+                        table[row['model']][row['feature']][key] = value
 
             return table
 
     def get_model_feature_dict(self, model_name):
+        # TODO: table_obj = DefaultMunch.fromDict(table.table), change table into table object
+        if model_name not in self.table:
+            raise KeyError("Model is not exist in the feature table.")
+
         return self.table[model_name]
 
 
@@ -91,3 +98,9 @@ class DataAliveTime:
 
     def get_seconds(self):
         return self._seconds
+
+
+if __name__ == '__main__':
+    from exceptions import FeatureCodeIsEmpty
+    test_table = FeatureTable("../config/features.csv")
+    pass
