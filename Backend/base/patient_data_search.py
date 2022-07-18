@@ -17,7 +17,7 @@ def model_feature_search_with_patient_id(patient_id, table, default_time=None, d
     for data_key in data:
         result_dict[data_key] = dict()
         # get_resource_datetime_and_value returns two values, date & value.
-        # for other purpose, use other function instead
+        # for other purpose, use other functions instead
         result_dict[data_key]['date'], result_dict[data_key]['value'] = get_resource_datetime_and_value(
             data[data_key], default_time)
 
