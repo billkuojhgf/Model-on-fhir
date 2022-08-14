@@ -1,6 +1,6 @@
 from typing import List
-from cds_hooks_work.request import Request, PatientViewRequest
-from cds_hooks_work.response import Response
+from .request import Request, PatientViewRequest
+from .response import Response
 from collections.abc import Callable
 
 HookHandler = callable([[Request, Response]])
@@ -10,7 +10,8 @@ PatientViewHandler = callable([[PatientViewRequest, Response]])
 class Service(object):
     # https://cds-hooks.org/specification/current/#discovery
     hook: str  # REQUIRED	string	The hook this service should be invoked on. See Hooks.
-    id: str  # REQUIRED	string	The {id} portion of the URL to this service which is available at {baseUrl}/cds-services/{id}
+    id: str  # REQUIRED	string	The {id} portion of the URL to this service which is available at
+    # {baseUrl}/cds-services/{id}
     description: str  # REQUIRED	string	The description of this service.
     title: str  # RECOMMENDED	string	The human-friendly name of this service.
     prefetch: object  # optional
@@ -41,7 +42,7 @@ class Service(object):
         self.handler = handler
 
     def handle_input(self, request_dict: dict):
-        response = Response(statusCode=200) #set a response with a default status code
+        response = Response(statusCode=200)  # set a response with a default status code
 
         if self.hook == 'patient-view':
             request = PatientViewRequest(request_dict)

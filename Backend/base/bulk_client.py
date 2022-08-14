@@ -5,6 +5,8 @@ from time import sleep
 from urllib import parse
 from urllib.parse import urljoin
 
+import ndjson
+import base64
 import jmespath
 import requests
 
@@ -77,17 +79,26 @@ class BulkDataClient(object):
                 self.manifest = MANIFEST_URLS.search(response.json())
                 return
 
-    def iter_json(self):
+    def iter_ndjson_dict(self) -> {str: list} or None:
         if not self.provisioned:
             return
+        # return_data_dict = { "{data.resourceType}" : [data[0], data[1]... ] }
+        return_data_dict = dict()
         for url in self.manifest:
-            data = self._issue(url)
-            for item in data.iter_lines():
-                return json.loads(item)
+            bulk_data_response = self._issue(url)
+            bulk_data_base64 = str(json.loads(bulk_data_response.content)["data"])
+            bulk_data_ndjson = base64.b64decode(bulk_data_base64)
+            bulk_data_ndjson = ndjson.loads(bulk_data_ndjson)
+            for bulk_data_json in bulk_data_ndjson:
+                if bulk_data_json['resourceType'] not in return_data_dict:
+                    return_data_dict[bulk_data_json['resourceType']] = []
+                return_data_dict[bulk_data_json['resourceType']].append(bulk_data_json)
+
+        return return_data_dict
 
 
 if __name__ == "__main__":
     bulk_server = BulkDataClient()
     bulk_server.provision()
-    print(bulk_server.iter_json())
+    ndj = bulk_server.iter_ndjson_dict()
     pass

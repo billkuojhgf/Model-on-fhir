@@ -1,6 +1,6 @@
-from cds_hooks_work.service import Service
-from cds_hooks_work.response import Response
-from cds_hooks_work.server import init, serve
+from .service import Service
+from .response import Response
+from .server import init, serve
 from typing import List
 from flask import Flask
 

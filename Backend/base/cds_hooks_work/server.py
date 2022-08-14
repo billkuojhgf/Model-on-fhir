@@ -7,6 +7,10 @@ flaskApp = Flask(__name__)
 def init(app):
     CORS(flaskApp)
 
+    @flaskApp.route("/")
+    def hello_world():
+        return "Welcome to CDS Service", 200
+
     @flaskApp.route('/cds-services')
     def discovery():
         return json.jsonify(app.discovery()), 200
