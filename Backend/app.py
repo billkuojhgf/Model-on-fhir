@@ -3,6 +3,7 @@ import csv
 import importlib
 import configparser
 
+from config import configObject as config
 from flask import Flask
 from flask import jsonify
 from flask import request
@@ -10,17 +11,15 @@ from flask import abort
 from flask_cors import CORS
 from munch import DefaultMunch
 # TODO: munch可以將dictionary轉成Object，日後可能會用到
-from base import feature_table
 from base import patient_data_search as ds
+from base.feature_table import feature_table
 from models import *
 
 app = Flask(__name__)
 CORS(app)
 
 # Map the csv into dictionary
-config = configparser.ConfigParser()
-config.read("./config.ini")
-table = feature_table.FeatureTable(config['table_path']['FEATURE_TABLE'])
+table = feature_table
 
 
 @app.route('/', methods=['GET'])
@@ -56,7 +55,6 @@ def api_with_id(api):
 
     patient_data_dictionary = ds.model_feature_search_with_patient_id(
         patient_id, table.get_model_feature_dict(api), None, hour_alive_time)
-    print(patient_data_dictionary)
     patient_data_dictionary["predict_value"] = return_model_result(patient_data_dictionary, api)
     return jsonify(patient_data_dictionary)
 

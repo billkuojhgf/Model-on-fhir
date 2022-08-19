@@ -1,19 +1,19 @@
 from __future__ import annotations
-import re
-import configparser
 
+import configparser
+import re
 from abc import ABC, abstractmethod
 from typing import Dict
-from fhirpy import SyncFHIRClient
-from fhirpy.lib import SyncFHIRResource
-from fhirpy.base.searchset import datetime
-from fhirpy.base.searchset import FHIR_DATE_FORMAT
-from fhirpy.base.exceptions import ResourceNotFound
-from dateutil.relativedelta import relativedelta
 
-config = configparser.ConfigParser()
-config.read("./config.ini")
-CLIENT = SyncFHIRClient(config['fhir_server']['FHIR_SERVER_URL'])
+from config import configObject as config
+from dateutil.relativedelta import relativedelta
+from fhirpy import SyncFHIRClient
+from fhirpy.base.exceptions import ResourceNotFound
+from fhirpy.base.searchset import FHIR_DATE_FORMAT
+from fhirpy.base.searchset import datetime
+from fhirpy.lib import SyncFHIRResource
+
+CLIENT: SyncFHIRClient = SyncFHIRClient(config['fhir_server']['FHIR_SERVER_URL'])
 
 
 # FHIR_DATE_FORMAT='%Y-%m-%d'
@@ -57,7 +57,7 @@ class GetFuncMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient's data with the {} method".format(self._strategy.__name__))
+        print("Getting patient's data with {} method".format(self._strategy.__name__))
         resource = self._strategy.execute(self, resources)
         return resource
 
@@ -166,7 +166,9 @@ class ResourceMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient's data with the {} method".format(self._strategy.__name__))
+        print("Getting patient's data with {} method".format(self._strategy.__name__))
+        global CLIENT
+        CLIENT = SyncFHIRClient(config['fhir_server']['FHIR_SERVER_URL'])
         resource_list = self._strategy.search(self, patient_id, table, default_time, data_alive_time)
         return resource_list
 
@@ -174,7 +176,7 @@ class ResourceMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient data's datetime with the {} method".format(self._strategy.__name__))
+        print("Getting patient data's datetime with {} method".format(self._strategy.__name__))
         resource_time = self._strategy.get_datetime(self, data_dictionary, default_time)
         return resource_time
 
@@ -297,16 +299,16 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
         return {'resource': results, 'component_code': code if is_in_component else None,
                 'type': 'Observation'}
 
-    def get_datetime(self, dictionary: dict, default_time) -> str or None:
+    def get_datetime(self, dictionary: dict, default_time) -> str | None:
         try:
             return _return_date_time_formatter(dictionary['resource'].effectiveDateTime)
-        except KeyError:
+        except (AttributeError, KeyError):
             try:
                 return _return_date_time_formatter(dictionary['resource'].effectivePeriod.start)
-            except KeyError:
+            except (AttributeError, KeyError):
                 return None
 
-    def get_value(self, dictionary: dict) -> int or str:
+    def get_value(self, dictionary: dict) -> int | str:
         # Two situation: one is to get the value of resource, the other is to get the value of resource.component
         if dictionary['component_code'] is not None:
             for component in dictionary['resource'].component:
@@ -338,7 +340,7 @@ class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
         return {'resource': None if len(results) == 0 else results, 'component_code': None,
                 'type': 'Condition'}
 
-    def get_datetime(self, dictionary: dict, default_time) -> str or None:
+    def get_datetime(self, dictionary: dict, default_time) -> str | None:
         try:
             return _return_date_time_formatter(dictionary['resource'].recordedDate)
         except AttributeError:
@@ -442,7 +444,7 @@ def get_patient_resources(patient_id, table, default_time: datetime, data_alive_
     return patient_resource_result
 
 
-def get_resource_datetime(data: Dict, default_time: datetime) -> str or None:
+def get_resource_datetime(data: Dict, default_time: datetime) -> str | None:
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(data['type']).capitalize()]
     data_datetime = patient_resources_mgmt.get_datetime_with_resources(data, default_time)
@@ -465,11 +467,13 @@ def get_resource_datetime_and_value(data: Dict, default_time: datetime) -> (str 
 
 
 if __name__ == "__main__":
-    import feature_table
+    import os
+    os.chdir("../")
+    from feature_table import feature_table
 
-    features__table = feature_table.FeatureTable("../config/features.csv")
+    features__table = feature_table
     patient__id = "test-03121002"
-    feature__table = features__table.get_model_feature_dict('qcsi')
+    feature__table = features__table.get_model_feature_dict('diabetes')
     default_time = datetime.datetime.now()
 
     patient_result_dict = dict()

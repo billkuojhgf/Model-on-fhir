@@ -1,6 +1,6 @@
 import json
-import configparser
 
+from config import configObject as config
 from time import sleep
 from urllib import parse
 from urllib.parse import urljoin
@@ -10,8 +10,6 @@ import base64
 import jmespath
 import requests
 
-config = configparser.ConfigParser()
-config.read("../config.ini")
 
 # Fixed variables
 COMMAND = '/Patient/$export'

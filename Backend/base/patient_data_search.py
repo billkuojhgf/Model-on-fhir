@@ -4,7 +4,10 @@ from base.searchesets_new import get_patient_resources
 from base.searchesets_new import get_resource_datetime_and_value
 
 
-def model_feature_search_with_patient_id(patient_id, table, default_time=None, data_alive_time=None):
+def model_feature_search_with_patient_id(patient_id: str,
+                                         table: dict,
+                                         default_time: str = None,
+                                         data_alive_time: str = None):
     if default_time is None:
         default_time = datetime.datetime.now()
 
@@ -25,13 +28,17 @@ def model_feature_search_with_patient_id(patient_id, table, default_time=None, d
 
 
 if __name__ == '__main__':
+    import os
+
+    os.chdir("../")
+
     from searchesets_new import get_patient_resources
     from searchesets_new import get_resource_datetime_and_value
-    import feature_table
+    from feature_table import feature_table
 
-    features__table = feature_table.FeatureTable("../config/features.csv")
+    features__table = feature_table
     patient__id = "test-03121002"
-    feature__table = features__table.get_model_feature_dict('qcsi')
+    feature__table = features__table.get_model_feature_dict('diabetes')
     default_time = datetime.datetime.now()
 
     print(model_feature_search_with_patient_id(patient__id, feature__table, default_time))

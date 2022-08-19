@@ -4,7 +4,7 @@ import re
 from base.exceptions import FeatureCodeIsEmpty
 
 
-class FeatureTable:
+class _FeatureTable:
     def __init__(self, feature_table_position):
         self.table = self.__create_table(feature_table_position)
 
@@ -54,6 +54,9 @@ class FeatureTable:
 
         return self.table[model_name]
 
+    def get_exist_model_name(self) -> list:
+        return [i for i in self.table.keys()]
+
 
 class DataAliveTime:
     def __init__(self, data_alive_time):
@@ -100,7 +103,11 @@ class DataAliveTime:
         return self._seconds
 
 
+feature_table = _FeatureTable("./config/features.csv")
+
 if __name__ == '__main__':
     from exceptions import FeatureCodeIsEmpty
-    test_table = FeatureTable("../config/features.csv")
+
+    test_table = _FeatureTable("./config/features.csv")
+    print(test_table)
     pass
