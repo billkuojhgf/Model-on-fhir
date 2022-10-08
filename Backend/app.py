@@ -95,7 +95,6 @@ def api_with_post(api):
     """
     patient_data_dict = request.get_json()
     verify_data(patient_data_dict, api)
-    print(patient_data_dict)
     patient_data_dict["predict_value"] = return_model_result(patient_data_dict, api)
     return jsonify(patient_data_dict)
 

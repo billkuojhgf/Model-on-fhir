@@ -1,100 +1,135 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
-<!--  <HelloWorld msg="Welcome to Your Vue.js App"/>-->
+  <!--  <HelloWorld msg="Welcome to Your Vue.js App"/>-->
   <div id="divChart">
-    <LineChart
-        v-for="x in dataData.length"
-        v-on:valueChange="changedValue"
-        :key="x"
-        :title="dataTitle[x-1]"
-        :chart-label= "dataLabel[x-1]"
-        :chart-point= "dataData[x-1]"
-    ></LineChart>
+    <label for="since-time">Since Datetime: </label>
+    <input
+        id="setMinDateTime"
+        v-model.lazy="minDate"
+        name="since-time"
+        type="datetime-local"
+        @change="minDateChange"
+    >
+    <div
+        style="display: flex"
+        v-for="x in getFeatureArray"
+        :key="x.name"
+    >
+      <div>
+        <ModelChart
+            v-if="x.name === type"
+            :chartUsed="x.name"
+            :title="x.name"
+        >
+        </ModelChart>
+      </div>
+    </div>
+  </div>
+  <div
+  >
+    <select
+        id="model-select"
+        v-model="type"
+        name="model"
+    >
+      <option
+          v-for="x in getFeatureArray"
+          :key="x.name"
+          :value="x.name"
+      >
+        {{ x.name }}
+      </option>
+    </select>
+    <p v-if="!gettingModelScoreStatus">
+      Model Score: {{getCurrentModelObject.score}}
+    </p>
+    <p
+      v-else-if="gettingModelScoreStatus"
+    >
+      Getting new model score...
+    </p>
   </div>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
-import LineChart from "./components/LineChartView";
-import axios from "axios";
+import ModelChart from "@/components/ModelChart";
+import {featureTable} from "@/baseModel/feature";
+import {getData} from "@/baseModel/patientDataSearch";
 
 export default {
   name: 'App',
   components: {
-    LineChart
+    ModelChart
   },
   data() {
     return {
-      dataTitle: [],
-      dataData: [],
-      dataLabel: [],
-      testing: this.LineChart
+      minDate: new Date(),
+      type: 'qcsi'
     }
   },
-  methods : {
+  methods: {
     // data is on ObjectType send by LineChartView.$emit
-    changedValue(data){
-      console.log("test " + data["featureName"] + " " + data["featureValue"])
-    }
+    minDateChange() {
+      this.$store.commit('changeMinDate', this.minDate)
+      this.$store.commit('changeModelChartUI')
+    },
   },
-  watch: {
-
-  },
-  created () {
-    // axios({
-    //   method: 'get',
-    //   baseURL: 'http://127.0.0.1:5000',
-    //   url: '/diabetes',
-    //   params:{'id': "test-03121002"},
-    //   "Content-Type": 'application/json'
-    // }).then((response) => {
-    //   const result = response.data
-    //   delete result['predict_value']
-    //   for(let key in result){
-    //     this.$data.dataTitle.push(key)
-    //     this.$data.dataData.push([result[key]["value"]])
-    //     this.$data.dataLabel.push([result[key]["date"]])
-    //   }
-    // }).catch((error) => {
-    //   console.error(error)
-    // })
-    // TODO: 這裡之後要改成可以接收FeatureTable的欄位並進行取值，effectiveDateTime與effectivePeriod.start之間的取值要先搞定
-    let array = ['8302-2', '29463-7']
-    let array2 = ['height', 'weight']
-    for(let temp = 0; temp < array.length; temp++){
-      axios({
-        method: 'get',
-        baseURL: 'http://ming-desktop.ddns.net:8192/fhir',
-        url: '/Observation',
-        params: {
-          subject: "test-03121002",
-          code: array[temp],
-          _sort: "date",
-        },
-        'Access-Control-Allow-Origin': '*',
-      }).then((response) => {
-        const result = response.data.entry
-        console.log(result)
-        this.$data.dataTitle.push(array2[temp])
-        let tempDataArray = []
-        let tempLabelArray = []
-        for(let i = 0; i < result.length; i++){
-          tempDataArray.push(result[i].resource.valueQuantity.value)
-          // maybe using effectiveDateTime? is a good idea!
-          tempLabelArray.push(result[i].resource.effectiveDateTime)
-        }
-        this.$data.dataData.push(tempDataArray)
-        this.$data.dataLabel.push(tempLabelArray)
-      }).catch(error => {
-        console.log(error)
-      })
+  watch: {},
+  computed: {
+    getFeatureArray() {
+      return this.$store.state.modelFeatureArray
+    },
+    getCurrentModelObject() {
+      let obj = null
+      for(const arr of this.$store.state.modelFeatureArray){
+        if(arr.name === this.type)
+          obj = arr
+      }
+      return obj
+    },
+    gettingModelScoreStatus() {
+      return this.$store.state.modelScoreGettingStatus
     }
+  }
+  ,
+  async created() {
+    /**
+     * modelFeatureArray: Array
+     * Element of modelFeatureArray: featureCollectObject
+     *
+     * featureCollectObject: key: name, resources, score
+     * name: string, model's name
+     * resources: object, patient resources from FHIR Server
+     * score: float, model's score
+     */
+    let modelFeatureArray = [] // Stores all feature
+    let featureCollectObject
 
+    console.log(featureTable)
+    for (const [key, value] of Object.entries(featureTable)) {
+      featureCollectObject = {}
+      featureCollectObject.name = key
+      featureCollectObject.resources = await getData('test-03121002', value)
+      featureCollectObject.score = null
+      modelFeatureArray.push(featureCollectObject)
+    }
+    console.log(modelFeatureArray)
+
+    this.$store.commit('updateFeatureArray', modelFeatureArray)
+
+    // TODO: 接下來，打API來取得各個Model的結果
+    // 這邊可以用actions來做，畢竟之後的很多事情都會透過actions來執行
   },
 }
 </script>
 
 <style>
+img {
+  height: 50px;
+  width: 50px;
+  margin-right: 10px
+}
+
 #app {
   display: flex;
   height: 500px;
@@ -106,7 +141,12 @@ export default {
   margin-top: 60px;
   border-style: double;
 }
-#divChart{
+
+#divChart {
   overflow: auto;
+}
+
+#model-select {
+  height: 4vmin;
 }
 </style>
