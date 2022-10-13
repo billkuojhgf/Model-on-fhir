@@ -7,3 +7,9 @@ CHARM,wide RAW,category,1=gt|14.5
 CHARM,wide RAW,category,0=le|14.5
 CHARM,history of Malignancy,category,1=true
 CHARM,history of Malignancy,category,0=false
+nsti,sea,category,1=true
+nsti,sea,category,0=false
+nsti,wbc,value,
+nsti,crp,value,
+nsti,seg,value,
+nsti,band,value,

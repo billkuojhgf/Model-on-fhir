@@ -15,7 +15,6 @@ import re
                 }
             }
         }
-    
 """
 prefix_list = [
     "eq",
