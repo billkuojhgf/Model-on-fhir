@@ -21,7 +21,8 @@ def predict(data: dict):
         data['seg']['value'],
         data['band']['value']
     ]
-    loaded_model = joblib.load("./LR_model_ZheYu_5fea")
+    # Fixme: 路徑問題，待解決
+    loaded_model = joblib.load("./models/nsti/LR_model_ZheYu_5fea")
     x.append(temp)
     result = loaded_model.predict_proba(x)
     return result[:, 1][0]
@@ -33,13 +34,13 @@ if __name__ == "__main__":
             "value": 1
         },
         "wbc": {
-            "value": 12200
+            "value": 12900
         },
         "crp": {
-            "value": 164.06
+            "value": 162.2
         },
         "seg": {
-            "value": 83.1
+            "value": 86.6
         },
         "band": {
             "value": 0

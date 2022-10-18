@@ -166,7 +166,7 @@ class ResourceMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient's data with {} method".format(self._strategy.__name__))
+        print("Getting patient's data with {} resources".format(self._strategy.__name__))
         global CLIENT
         CLIENT = SyncFHIRClient(config['fhir_server']['FHIR_SERVER_URL'])
         resource_list = self._strategy.search(self, patient_id, table, default_time, data_alive_time)
@@ -473,7 +473,7 @@ if __name__ == "__main__":
 
     features__table = feature_table
     patient__id = "test-03121002"
-    feature__table = features__table.get_model_feature_dict('diabetes')
+    feature__table = features__table.get_model_feature_dict('nsti')
     default_time = datetime.datetime.now()
 
     patient_result_dict = dict()

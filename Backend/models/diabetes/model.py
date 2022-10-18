@@ -19,7 +19,7 @@ def predict(data: dict):
         data['insulin']['value'],
         bmi(data['height']['value'], data['weight']['value']),
         0.627,
-        72
+        data['age']['value']
     ]
     loaded_model = joblib.load("./models/diabetes/finalized_model.sav")
     x.append(temp)

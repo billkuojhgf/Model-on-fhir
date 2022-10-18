@@ -52,10 +52,11 @@ def api_with_id(api):
     if request.values.get('data_alive_time') is not None:
         hour_alive_time = request.values.get('hour_alive_time')
 
-    patient_data_dictionary = ds.model_feature_search_with_patient_id(
+    patient_data_dict = ds.model_feature_search_with_patient_id(
         patient_id, table.get_model_feature_dict(api), None, hour_alive_time)
-    patient_data_dictionary["predict_value"] = return_model_result(patient_data_dictionary, api)
-    return jsonify(patient_data_dictionary)
+    print(patient_data_dict)
+    patient_data_dict["predict_value"] = return_model_result(patient_data_dict, api)
+    return jsonify(patient_data_dict)
 
 
 def verify_data(patient_data_dict, api):
@@ -103,6 +104,7 @@ def return_model_result(patient_data_dict, api):
     """
         Function return_model_result會對 model執行 predict的動作，回傳 model的結果
         2022-10-10 新增一個新的動作：在丟入Model之前，會先將資料根據ModelFeature Table轉譯成model prefer的category
+        TODO: 把return_model_result獨立成一個新的檔案，需要解決的技術難點: globals()[api]
     """
     model_results = globals()[api].predict(patient_data_dict)
     return model_results
@@ -127,5 +129,6 @@ def import_model():
 import_model()
 
 if __name__ == "__main__":
+    print(globals())
     app.debug = True
     app.run()
