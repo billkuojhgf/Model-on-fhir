@@ -123,6 +123,32 @@ class Observation extends ResourcesInterface {
 
 }
 
+/**
+ * Condition
+ *
+ * @class Condition
+ * @extends ResourcesInterface
+ */
+// eslint-disable-next-line no-unused-vars
+class Condition extends ResourcesInterface{
+    // eslint-disable-next-line no-unused-vars
+    async search(patient_id, code){
+        return true
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    getValue(resourceObject) {
+        let array = []
+        array.push(true)
+        return array
+    }
+
+    //eslint-disable-next-line no-unused-vars
+    getDateTime(resourceList) {
+        return ["2021-12-12"]
+    }
+}
+
 
 class ResourceMgmt {
 

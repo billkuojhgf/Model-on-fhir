@@ -8,7 +8,7 @@ const getData = async (patient_id, featureObj) => {
 
     for (const [key, valueObj] of Object.entries(featureObj)) {
         // TODO: 在加入更多判斷之後，這行程式碼可以槓掉。目前只支援observation
-        if(valueObj['type_of_data'].toLowerCase() !== 'observation')
+        if(valueObj['type_of_data'].toLowerCase() === 'patient')
             continue;
 
         await getResourceDatetimeAndValue(patient_id, valueObj)
