@@ -1,12 +1,15 @@
 <template>
   <div v-if="!getChangeStatus">
-    <Line
-        :chart-data="chartData"
-        :chart-options="chartOptions"
-    />
-    <label>{{ title + ": " }}</label>
-    <input type="number" v-model.lazy="take">
-    <p></p>
+    <div class="lineChartClass">
+      <Line
+          :chart-data="chartData"
+          :chart-options="chartOptions"
+      />
+    </div>
+    <div class="chartLabelClass">
+      <label>{{ title + ": " }}</label>
+      <input type="number" v-model.lazy="take">
+    </div>
   </div>
 </template>
 
@@ -15,7 +18,7 @@ import {Line} from 'vue-chartjs'
 import 'chartjs-adapter-moment'
 import {Chart as ChartJS, Title, Tooltip, Legend, LineElement, PointElement, LinearScale, TimeScale} from 'chart.js'
 
-
+ChartJS.defaults.font.size = 13;
 ChartJS.register(Title, Tooltip, Legend, LineElement, LinearScale, PointElement, TimeScale)
 export default {
   name: "LineChart",
@@ -33,7 +36,7 @@ export default {
           {
             label: this.title,
             fill: true,
-            tension: 0.1,
+            tension: 0.2,
             borderWidth: 3,
             borderColor: [
               'rgb(255, 159, 64)',
@@ -44,11 +47,23 @@ export default {
         ]
       },
       chartOptions: {
+        aspectRatio: 1.25,
         responsive: true,
         plugins: {
+          decimation: {
+            threshold: 5
+          },
+          legend: {
+            labels: {
+              font: {
+                size: 14
+              }
+            }
+          },
           filler: {
             propagate: false
-          }
+          },
+          bodyAlign: 'center'
         },
         onClick: (e) => {
           this.take = e.chart.tooltip.dataPoints[0].raw
@@ -92,5 +107,14 @@ export default {
 </script>
 
 <style scoped>
+.lineChartClass {
+  width: 40vw;
+  position: relative;
+  margin: 15px
+}
+
+.chartLabelClass {
+  margin-bottom: 10px;
+}
 
 </style>

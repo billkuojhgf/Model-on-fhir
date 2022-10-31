@@ -1,14 +1,18 @@
 <template>
   <!-- v-on:valueChange is a label from LineChart $emit   -->
   <h1>{{ title }}</h1>
-  <LineChart
-      v-for="x in dataData.length"
-      :key="x"
-      :chart-label="dataLabel[x-1]"
-      :chart-point="dataData[x-1]"
-      :title="dataTitle[x-1]"
-      @takeChange="changedTake_Obj"
-  ></LineChart>
+  <div
+    class="lineChartSetsClass"
+  >
+    <LineChart
+        v-for="x in dataData.length"
+        :key="x"
+        :chart-label="dataLabel[x-1]"
+        :chart-point="dataData[x-1]"
+        :title="dataTitle[x-1]"
+        @takeChange="changedTake_Obj"
+    ></LineChart>
+  </div>
 </template>
 
 <script>
@@ -77,6 +81,35 @@ export default {
 <style scoped>
 p {
   font-size: 20px;
+}
+
+.lineChartSetsClass {
+  height: 70vh;
+  width: 100%;
+  align-content: center;
+  overflow-y: scroll;
+}
+
+.lineChartSetsClass::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  background-color: #F5F5F5;
+}
+
+.lineChartSetsClass::-webkit-scrollbar{
+  width: 5px;
+  background-color: #F5F5F5;
+}
+
+.lineChartSetsClass::-webkit-scrollbar-thumb {
+  background-color: #F90;
+  background-image: -webkit-linear-gradient(45deg,
+  rgba(255, 255, 255, .2) 25%,
+  transparent 25%,
+  transparent 50%,
+  rgba(255, 255, 255, .2) 50%,
+  rgba(255, 255, 255, .2) 75%,
+  transparent 75%,
+  transparent)
 }
 
 </style>

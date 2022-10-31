@@ -1,53 +1,62 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
   <!--  <HelloWorld msg="Welcome to Your Vue.js App"/>-->
-  <div id="divChart">
-    <label for="since-time">Since Datetime: </label>
-    <input
-        id="setMinDateTime"
-        v-model.lazy="minDate"
-        name="since-time"
-        type="datetime-local"
-        @change="minDateChange"
-    >
-    <div
-        style="display: flex"
-        v-for="x in getFeatureArray"
-        :key="x.name"
-    >
+  <div id="mainDiv">
+    <div id="divChart">
       <div>
-        <ModelChart
-            v-if="x.name === type"
-            :chartUsed="x.name"
-            :title="x.name"
+        <label for="since-time">Since Datetime: </label>
+        <input
+            id="setMinDateTime"
+            v-model="minDate"
+            name="since-time"
+            type="datetime-local"
+            @change="minDateChange"
         >
-        </ModelChart>
       </div>
-    </div>
-  </div>
-  <div
-  >
-    <select
-        id="model-select"
-        v-model="type"
-        name="model"
-    >
-      <option
+      <div
+          style="display: flex;justify-content: center"
           v-for="x in getFeatureArray"
           :key="x.name"
-          :value="x.name"
       >
-        {{ x.name }}
-      </option>
-    </select>
-    <p v-if="!gettingModelScoreStatus">
-      Model Score: {{getCurrentModelObject.score}}
-    </p>
-    <p
-      v-else-if="gettingModelScoreStatus"
+        <div>
+          <ModelChart
+              v-if="x.name === type"
+              :chartUsed="x.name"
+              :title="x.name"
+          >
+          </ModelChart>
+        </div>
+      </div>
+    </div>
+    <div
+        id="divModelSelect"
     >
-      Getting new model score...
-    </p>
+      <select
+          id="model-select"
+          v-model="type"
+          name="model"
+      >
+        <option
+            v-for="x in getFeatureArray"
+            :key="x.name"
+            :value="x.name"
+        >
+          {{ x.name }}
+        </option>
+      </select>
+      <h2
+          v-if="!gettingModelScoreStatus"
+          style="width: 50%;text-align: left"
+      >
+        Model Score: {{getCurrentModelObject.score}}
+      </h2>
+      <h2
+        v-else-if="gettingModelScoreStatus"
+        style="width: 50%;text-align: right"
+      >
+        Getting new model score...
+      </h2>
+    </div>
   </div>
 </template>
 
@@ -63,7 +72,7 @@ export default {
   },
   data() {
     return {
-      minDate: new Date(),
+      minDate: "2018-05-12T00:00:00.000Z",
       type: 'qcsi'
     }
   },
@@ -131,22 +140,33 @@ img {
 }
 
 #app {
-  display: flex;
-  height: 500px;
+  height: 98vh;
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
-  border-style: double;
+  /*margin-top: 60px;*/
+}
+
+#mainDiv{
+  height: 90vh;
+  display: flex;
+  justify-content: space-between;
 }
 
 #divChart {
-  overflow: auto;
+  height: 85vh;
+  width: 60vw;
+  /*overflow: overlay;*/
+}
+
+#divModelSelect{
+  width: 40vw;
 }
 
 #model-select {
   height: 4vmin;
+  width: 50%;
 }
 </style>
