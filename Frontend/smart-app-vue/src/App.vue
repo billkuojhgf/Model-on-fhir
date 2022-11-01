@@ -72,7 +72,7 @@ export default {
   },
   data() {
     return {
-      minDate: "2018-05-12T00:00:00.000Z",
+      minDate: new Date(),
       type: 'qcsi'
     }
   },

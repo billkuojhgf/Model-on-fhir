@@ -35,7 +35,7 @@ export default {
         datasets: [
           {
             label: this.title,
-            fill: true,
+            fill: false,
             tension: 0.2,
             borderWidth: 3,
             borderColor: [
@@ -49,6 +49,7 @@ export default {
       chartOptions: {
         aspectRatio: 1.25,
         responsive: true,
+        animation: false,
         plugins: {
           decimation: {
             threshold: 5
@@ -75,8 +76,13 @@ export default {
               unit: 'month' // TODO: May have to change unit if the time between maximum and minimum is under a month
             },
             max: this.$store.state.maxDate,
-            min: this.$store.state.minDate,
+            // min: this.$store.state.minDate,
             alignToPixels: true
+          },
+          y: {
+            type: 'linear',
+            max: Math.max(...this.chartPoint) + Math.max(...this.chartPoint)*0.1,
+            min: Math.min(...this.chartPoint) - Math.min(...this.chartPoint)*0.1,
           }
         }
       },
