@@ -30,8 +30,9 @@ export default {
   },
   data() {
     return {
+      minDataSlice: 2,
       chartData: {
-        labels: this.chartLabel,
+        labels: this.chartLabel.slice(this.minDataSlice),
         datasets: [
           {
             label: this.title,
@@ -42,7 +43,7 @@ export default {
               'rgb(255, 159, 64)',
             ],
             pointBorderWidth: 5,
-            data: this.chartPoint,
+            data: this.chartPoint.slice(this.minDataSlice),
           }
         ]
       },
@@ -76,7 +77,7 @@ export default {
               unit: 'month' // TODO: May have to change unit if the time between maximum and minimum is under a month
             },
             max: this.$store.state.maxDate,
-            // min: this.$store.state.minDate,
+            min: this.$store.state.minDate,
             alignToPixels: true
           },
           y: {
@@ -88,6 +89,20 @@ export default {
       },
       take: null,
     }
+  },
+  beforeCreate(){
+    let count = 0
+
+    this.chartLabel.forEach(dateElement => {
+      let minDate = new Date(this.$store.state.minDate)
+      let currentDate = new Date(dateElement)
+      if(minDate.getTime() > currentDate.getTime()) {
+        count++
+      }
+    })
+
+    this.minDataSlice = count
+    console.log(this.minDataSlice)
   },
   mounted() {
     // eslint-disable-next-line vue/no-mutating-props
@@ -101,13 +116,24 @@ export default {
       })
     },
     getChangeStatus() {
+      let count = 0
+
+      this.chartLabel.forEach(dateElement => {
+        let minDate = new Date(this.$store.state.minDate)
+        let currentDate = new Date(dateElement)
+        if(minDate.getTime() > currentDate.getTime()) {
+          count++
+        }
+      })
+      console.log(count)
+      this.minDataSlice = 1
       this.chartOptions.scales.x.min = this.$store.state.minDate
     }
   },
   computed: {
     getChangeStatus() {
       return this.$store.state.dateChanged
-    }
+    },
   }
 }
 </script>

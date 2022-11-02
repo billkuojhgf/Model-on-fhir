@@ -31,6 +31,18 @@
     <div
         id="divModelSelect"
     >
+      <h2
+          v-if="!gettingModelScoreStatus"
+          style="width: 50%;text-align: left"
+      >
+        Model Score: {{getCurrentModelObject.score}}
+      </h2>
+      <h2
+        v-else-if="gettingModelScoreStatus"
+        style="width: 75%;text-align: left"
+      >
+        Getting new model score...
+      </h2>
       <select
           id="model-select"
           v-model="type"
@@ -44,18 +56,6 @@
           {{ x.name }}
         </option>
       </select>
-      <h2
-          v-if="!gettingModelScoreStatus"
-          style="width: 50%;text-align: left"
-      >
-        Model Score: {{getCurrentModelObject.score}}
-      </h2>
-      <h2
-        v-else-if="gettingModelScoreStatus"
-        style="width: 50%;text-align: right"
-      >
-        Getting new model score...
-      </h2>
     </div>
   </div>
 </template>
@@ -162,11 +162,18 @@ img {
 }
 
 #divModelSelect{
+  display: flex;
+  flex-direction: column;
   width: 40vw;
+
 }
 
 #model-select {
   height: 4vmin;
   width: 50%;
+  float: left;
+  margin-bottom: 20px;
+  font-size: 16px;
+  font-weight:bold;
 }
 </style>

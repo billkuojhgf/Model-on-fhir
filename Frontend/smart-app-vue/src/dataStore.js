@@ -3,6 +3,8 @@ import axios from "axios";
 
 const nowDate = new Date()
 
+const base = 'https://4cbd-140-115-87-242.ngrok.io/'
+
 export const store = createStore({
     state () {
         return {
@@ -54,7 +56,7 @@ export const store = createStore({
             })
             axios({
                 method: 'post',
-                baseURL: 'http://127.0.0.1:5000',
+                baseURL: base,
                 url: `/${modelFeatureObj.name}/change`,
                 data: featureObj,
                 'Content-Type': 'application/json',
