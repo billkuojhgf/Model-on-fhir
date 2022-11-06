@@ -3,6 +3,7 @@ import os
 from mask import mask
 from app import app
 from app import import_model
+from flask_cors import CORS
 
 
 def init_models():
@@ -34,5 +35,6 @@ def init_models():
 if __name__ == '__main__':
     mask()
     init_models()
+    CORS(app)
     app.debug = True
     app.run()
