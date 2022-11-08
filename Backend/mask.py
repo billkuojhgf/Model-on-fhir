@@ -24,6 +24,7 @@ def mask():
         r"simpo.*mask.*?(\d{1,2}) *?l\/min",
         r"s\/m.*(\d{1,2})(l ?(\/min)?[^a-z]|liter|lpm)",
         r"mask.*?(\d{1,2} *?l)",
+        r"(^[0-9]*$)"
     ])
     simple_mask_fio2 = ConcreteRegexSearch(unit_type[1], [
         r"mask.*?(\d{2,3}) *(%)",
