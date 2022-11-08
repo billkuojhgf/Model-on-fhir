@@ -133,6 +133,9 @@ export default {
 </script>
 
 <style>
+body{
+  overflow: hidden;
+}
 img {
   height: 50px;
   width: 50px;
@@ -158,6 +161,7 @@ img {
 #divChart {
   height: 85vh;
   width: 60vw;
+  margin: 10px;
   /*overflow: overlay;*/
 }
 

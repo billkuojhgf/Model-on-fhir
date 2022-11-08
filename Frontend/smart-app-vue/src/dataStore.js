@@ -3,13 +3,13 @@ import axios from "axios";
 
 const nowDate = new Date()
 
-const base = 'https://4cbd-140-115-87-242.ngrok.io/'
+const base = 'http://localhost:5000'
 
 export const store = createStore({
     state () {
         return {
             modelFeatureArray: [],
-            modelScoreGettingStatus: false, // while data changed, parameter will turn to true
+            modelScoreGettingStatus: false, // while data changes, parameter will turn to true
             dateChanged: false,
             minDate: nowDate.setFullYear(nowDate.getFullYear() - 7),
             maxDate: new Date(),
@@ -40,7 +40,7 @@ export const store = createStore({
              */
             const arrayIndex = valueObj.index
             const featureName = valueObj.featureName
-            state.modelFeatureArray[arrayIndex].resources[featureName].take = valueObj.featureValue
+            state.modelFeatureArray[arrayIndex].resources[featureName].take = valueObj.featureValue == 'true' ? true : valueObj.featureValue == 'false' ? false : valueObj.featureValue
         },
         gettingModelScore(state, statusBool){
             state.modelScoreGettingStatus = statusBool

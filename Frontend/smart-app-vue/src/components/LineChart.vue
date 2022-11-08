@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!getChangeStatus">
+  <div style="width: 32.92%;" v-if="!getChangeStatus">
     <div class="lineChartClass">
       <Line
           :chart-data="chartData"
@@ -7,35 +7,49 @@
       />
     </div>
     <div class="chartLabelClass">
-      <label>{{ title + ": " }}</label>
-      <input type="number" v-model.lazy="take">
+      <label>{{ title.replaceAll("_", " ") }}</label>
+      <div>
+        <input
+            v-if="featureObj[title]['type_of_data'] === 'observation'"
+            type="text"
+            v-model.lazy="take"
+        >
+      </div>
+      <div v-if="featureObj[title]['type_of_data'] === 'condition'">
+        <!--   Keep spaces for condition resources in search_type == "count"     -->
+        <label><input type="radio" v-model="take" :value="true">True</label>
+        <label><input type="radio" v-model="take" :value="false">False</label>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import {Line} from 'vue-chartjs'
-import 'chartjs-adapter-moment'
+import {Line} from 'vue-chartjs';
+import {featureTable} from "@/baseModel/feature";
+import 'chartjs-adapter-moment';
 import {Chart as ChartJS, Title, Tooltip, Legend, LineElement, PointElement, LinearScale, TimeScale} from 'chart.js'
 
-ChartJS.defaults.font.size = 13;
+ChartJS.defaults.font.size = 10;
 ChartJS.register(Title, Tooltip, Legend, LineElement, LinearScale, PointElement, TimeScale)
 export default {
   name: "LineChart",
   components: {Line},
   props: {
+    modelName: String,
     title: String,
     chartLabel: Array,
     chartPoint: Array,
   },
   data() {
     return {
+      featureObj: featureTable[this.modelName],
       minDataSlice: 2,
       chartData: {
         labels: this.chartLabel.slice(this.minDataSlice),
         datasets: [
           {
-            label: this.title,
+            label: this.title.replaceAll("_", " "),
             fill: false,
             tension: 0.2,
             borderWidth: 3,
@@ -58,7 +72,7 @@ export default {
           legend: {
             labels: {
               font: {
-                size: 14
+                size: 16
               }
             }
           },
@@ -102,7 +116,6 @@ export default {
     })
 
     this.minDataSlice = count
-    console.log(this.minDataSlice)
   },
   mounted() {
     // eslint-disable-next-line vue/no-mutating-props
@@ -140,13 +153,17 @@ export default {
 
 <style scoped>
 .lineChartClass {
-  width: 40vw;
   position: relative;
   margin: 15px
 }
 
 .chartLabelClass {
-  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  padding-bottom: 10px;
+  border-bottom-style: dashed;
 }
 
 </style>

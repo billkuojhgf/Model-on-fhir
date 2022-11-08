@@ -133,7 +133,7 @@ class Observation extends ResourcesInterface {
 class Condition extends ResourcesInterface{
     // eslint-disable-next-line no-unused-vars
     async search(patient_id, code){
-        return true
+        return 1
     }
 
     // eslint-disable-next-line no-unused-vars

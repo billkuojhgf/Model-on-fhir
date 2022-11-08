@@ -1,6 +1,6 @@
 <template>
   <!-- v-on:valueChange is a label from LineChart $emit   -->
-  <h1>{{ title }}</h1>
+  <h2 style="margin-bottom: 10px">{{ title }}</h2>
   <div
     class="lineChartSetsClass"
   >
@@ -10,6 +10,7 @@
         :chart-label="dataLabel[x-1]"
         :chart-point="dataData[x-1]"
         :title="dataTitle[x-1]"
+        :model-name="title"
         @takeChange="changedTake_Obj"
     ></LineChart>
   </div>
@@ -84,10 +85,13 @@ p {
 }
 
 .lineChartSetsClass {
+  display: flex;
+  flex-wrap: wrap;
   height: 70vh;
-  width: 100%;
-  align-content: center;
+  width: 60vw;
+  justify-content: space-around;
   overflow-y: scroll;
+
 }
 
 .lineChartSetsClass::-webkit-scrollbar-track {
