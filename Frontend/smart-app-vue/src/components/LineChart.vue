@@ -8,17 +8,23 @@
     </div>
     <div class="chartLabelClass">
       <label>{{ title.replaceAll("_", " ") }}</label>
-      <div>
+      <div
+          class="divInputClass"
+          v-if="featureObj[title]['type_of_data'] === 'observation' || featureObj[title]['type_of_data'] === 'patient'"
+      >
         <input
-            v-if="featureObj[title]['type_of_data'] === 'observation'"
-            type="text"
+            type="number"
             v-model.lazy="take"
         >
+        <span style="margin-left:3px;font-size: 12px">{{ featureObj[title]['unit'] }}</span>
       </div>
-      <div v-if="featureObj[title]['type_of_data'] === 'condition'">
+      <div
+          class="divInputClass"
+          v-if="featureObj[title]['type_of_data'] === 'condition'"
+      >
         <!--   Keep spaces for condition resources in search_type == "count"     -->
-        <label><input type="radio" v-model="take" :value="true">True</label>
-        <label><input type="radio" v-model="take" :value="false">False</label>
+        <label style="padding-top: 3px"><input type="radio" v-model="take" :value="true">True</label>
+        <label style="padding-top: 3px"><input type="radio" v-model="take" :value="false">False</label>
       </div>
     </div>
   </div>
@@ -152,6 +158,20 @@ export default {
 </script>
 
 <style scoped>
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+   display: none;
+  -webkit-appearance: none;
+}
+input {
+  margin-top: 5px;
+  height: 15px;
+}
+input[type=number] {
+  /*text-align: center;*/
+  width: 4vw;
+}
+
 .lineChartClass {
   position: relative;
   margin: 15px
@@ -164,6 +184,10 @@ export default {
   width: 100%;
   padding-bottom: 10px;
   border-bottom-style: dashed;
+}
+
+.divInputClass {
+  height: 3.5vh
 }
 
 </style>

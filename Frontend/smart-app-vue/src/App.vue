@@ -1,5 +1,5 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
+  <img alt="Vue logo" src="./assets/mocab_icon.png">
   <!--  <HelloWorld msg="Welcome to Your Vue.js App"/>-->
   <div id="mainDiv">
     <div id="divChart">
@@ -33,13 +33,11 @@
     >
       <h2
           v-if="!gettingModelScoreStatus"
-          style="width: 50%;text-align: left"
       >
         Model Score: {{getCurrentModelObject.score}}
       </h2>
       <h2
         v-else-if="gettingModelScoreStatus"
-        style="width: 75%;text-align: left"
       >
         Getting new model score...
       </h2>
@@ -137,9 +135,12 @@ body{
   overflow: hidden;
 }
 img {
-  height: 50px;
-  width: 50px;
+  height: 7vh;
   margin-right: 10px
+}
+
+h2 {
+  text-align: left;
 }
 
 #app {
@@ -160,7 +161,7 @@ img {
 
 #divChart {
   height: 85vh;
-  width: 60vw;
+  width: 70vw;
   margin: 10px;
   /*overflow: overlay;*/
 }
@@ -168,8 +169,7 @@ img {
 #divModelSelect{
   display: flex;
   flex-direction: column;
-  width: 40vw;
-
+  width: 30vw;
 }
 
 #model-select {

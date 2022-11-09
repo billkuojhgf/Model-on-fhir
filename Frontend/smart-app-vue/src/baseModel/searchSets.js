@@ -1,6 +1,6 @@
 import FHIR from 'fhirclient'
 
-let server_url = 'http://ming-desktop.ddns.net:8192/fhir'
+let server_url = 'http://140.115.87.242:8192/fhir'
 
 const getServerUrl = () => {
     return server_url;
@@ -149,6 +149,25 @@ class Condition extends ResourcesInterface{
     }
 }
 
+// eslint-disable-next-line no-unused-vars
+class Patient extends ResourcesInterface{
+    // eslint-disable-next-line no-unused-vars
+    async search(patient_id, code){
+        return 1
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    getValue(resourceObject) {
+        let array = []
+        array.push(25)
+        return array
+    }
+
+    //eslint-disable-next-line no-unused-vars
+    getDateTime(resourceList) {
+        return ["1997-10-02"]
+    }
+}
 
 class ResourceMgmt {
 

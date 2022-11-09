@@ -1,6 +1,6 @@
 <template>
   <!-- v-on:valueChange is a label from LineChart $emit   -->
-  <h2 style="margin-bottom: 10px">{{ title }}</h2>
+  <h1 style="margin-bottom: 10px">{{ title }}</h1>
   <div
     class="lineChartSetsClass"
   >
@@ -87,7 +87,7 @@ p {
 .lineChartSetsClass {
   display: flex;
   flex-wrap: wrap;
-  height: 70vh;
+  height: 78vh;
   width: 60vw;
   justify-content: space-around;
   overflow-y: scroll;
