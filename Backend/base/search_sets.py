@@ -260,6 +260,7 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
             seconds=table['data_alive_time'].get_seconds()
         )).strftime(FHIR_DATE_FORMAT)
         code = table['code']
+        default_value = table['default_value']
 
         resources = CLIENT.resources('Observation')
         search = resources.search(
@@ -288,13 +289,15 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
                 """
                 如果再次搜尋後的結果依舊為0，代表資料庫中沒有此數據，回傳錯誤到前端(可能還可以想一些其他的解決方案)
                 """
-
-                raise ResourceNotFound(
-                    'Could not find the resources {code} under time {time}, no enough data for the patient'.format(
-                        code=code,
-                        time=data_time_since
+                if default_value is None:
+                    raise ResourceNotFound(
+                        'Could not find the resources {code} under time {time}, no enough data for the patient'.format(
+                            code=code,
+                            time=data_time_since
+                        )
                     )
-                )
+                else:
+                    results = default_value
 
         return {'resource': results, 'component_code': code if is_in_component else None,
                 'type': 'Observation'}
@@ -310,6 +313,9 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
 
     def get_value(self, dictionary: dict) -> int | str:
         # Two situation: one is to get the value of resource, the other is to get the value of resource.component
+        if type(dictionary['resource']) != SyncFHIRResource:
+            return dictionary['resource']
+
         if dictionary['component_code'] is not None:
             for component in dictionary['resource'].component:
                 for coding in component.code.coding:

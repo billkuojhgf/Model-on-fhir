@@ -105,6 +105,7 @@ def return_model_result(patient_data_dict, api):
         2022-10-10 新增一個新的動作：在丟入Model之前，會先將資料根據ModelFeature Table轉譯成model prefer的category
         TODO: 把return_model_result獨立成一個新的檔案，需要解決的技術難點: globals()[api]
     """
+
     model_results = globals()[api].predict(patient_data_dict)
     return model_results
 

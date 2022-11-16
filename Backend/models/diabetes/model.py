@@ -12,13 +12,13 @@ def predict(data: dict):
 
     # TODO: get_age要重做，想一個好的辦法來處理這種例外情節
     temp = [
-        6,
+        data['pregnancies']['value'],
         data['glucose']['value'],
         data['diastolic_blood_pressure']['value'],
-        35,
+        data['skinthickness']['value'],
         data['insulin']['value'],
         bmi(data['height']['value'], data['weight']['value']),
-        0.627,
+        data['diabetespedigreefunction']['value'],
         data['age']['value']
     ]
     loaded_model = joblib.load("./models/diabetes/finalized_model.sav")

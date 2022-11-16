@@ -1,15 +1,20 @@
-model,feature,type,case_of_category
-CHARM,Hypothermia,category,1=lt|36
-CHARM,Hypothermia,category,0=ge|36
-CHARM,Anemia,category,1=lt|4
-CHARM,Anemia,category,0=ge|4
-CHARM,wide RAW,category,1=gt|14.5
-CHARM,wide RAW,category,0=le|14.5
-CHARM,history of Malignancy,category,1=true
-CHARM,history of Malignancy,category,0=false
-nsti,sea,category,1=true
-nsti,sea,category,0=false
-nsti,wbc,value,
-nsti,crp,value,
-nsti,seg,value,
-nsti,band,value,
+model,feature,type,case_of_category,index
+CHARM,Chill,category,1=true,1
+CHARM,Chill,category,0=false,1
+CHARM,Hypothermia,category,1=lt|36,2
+CHARM,Hypothermia,category,0=ge|36,2
+CHARM,Anemia,category,1=lt|4,3
+CHARM,Anemia,category,0=ge|4,3
+CHARM,wide RAW,category,1=gt|14.5,4
+CHARM,wide RAW,category,0=le|14.5,4
+CHARM,history of Malignancy,category,1=true,5
+CHARM,history of Malignancy,category,0=false,5
+nsti,sea,category,1=true,1
+nsti,sea,category,0=false,1
+nsti,wbc,value,,2
+nsti,crp,value,,3
+nsti,seg,value,,4
+nsti,band,value,,5
+qcsi,respiratory_rate,value,,
+qcsi,spo2,value,,
+qcsi,o2_flow_rate,value,,

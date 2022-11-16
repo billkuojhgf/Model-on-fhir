@@ -1,5 +1,6 @@
 import csv
 import re
+from base.model_feature_table import transform_to_correct_type
 
 from base.exceptions import FeatureCodeIsEmpty
 
@@ -11,7 +12,7 @@ class _FeatureTable:
     @classmethod
     def __create_table(cls, feature_table_position):
         table = {}
-        special_field_sets = ('model', "feature", "code", "code_system", "data_alive_time")
+        special_field_sets = ('model', "feature", "code", "code_system", "data_alive_time", "default_value")
         with open(feature_table_position, newline='') as feature_table_file:
             rows = csv.DictReader(feature_table_file)
             for row in rows:
@@ -21,6 +22,8 @@ class _FeatureTable:
                 # 在model name 的Dictionary 裡新建一個以feature name 為key 的Dictionary value
                 if row['feature'] not in table[row['model']]:
                     table[row['model']][row['feature']] = {}
+
+                temp_table = table[row['model']][row['feature']]
 
                 # 處理code 的變數內容，如果有code system 就再新增進去
                 code = row['code']
@@ -32,18 +35,20 @@ class _FeatureTable:
                     raise FeatureCodeIsEmpty(row['feature'])
 
                 # Feature 有兩種以上的code
-                if 'code' in table[row['model']][row['feature']]:
-                    table[row['model']][row['feature']]['code'] = table[row['model']][row['feature']]['code'] \
-                                                                  + ",{}".format(code)
+                if 'code' in temp_table:
+                    temp_table['code'] = temp_table['code'] + ",{}".format(code)
                 else:
-                    table[row['model']][row['feature']]['code'] = code
+                    temp_table['code'] = code
 
-                table[row['model']][row['feature']]['data_alive_time'] = DataAliveTime(
-                    row['data_alive_time'])
+                # 取得距今多久以內的資料
+                temp_table['data_alive_time'] = DataAliveTime(row['data_alive_time'])
+
+                temp_table['default_value'] = None if row['default_value'] == '' \
+                    else transform_to_correct_type(row['default_value'])
                 # 剩餘的key value就用迴圈建立，因為沒什麼特別的了
                 for key, value in row.items():
                     if key not in special_field_sets:
-                        table[row['model']][row['feature']][key] = value
+                        temp_table[key] = value
 
             return table
 
@@ -102,12 +107,12 @@ class DataAliveTime:
     def get_seconds(self):
         return self._seconds
 
-
-feature_table = _FeatureTable("./config/features.csv")
+if __name__ != '__main__':
+    feature_table = _FeatureTable("./config/features.csv")
 
 if __name__ == '__main__':
     from exceptions import FeatureCodeIsEmpty
 
-    test_table = _FeatureTable("./config/features.csv")
+    test_table = _FeatureTable("../config/features.csv")
     print(test_table)
     pass

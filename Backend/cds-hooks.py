@@ -1,15 +1,13 @@
 import os
-import cds_hooks_work as cds
+import base.cds_hooks_work as cds
 from time import sleep
 
 import fhirpy.base.exceptions
 # XXX: 重寫！！太爛了
-if os.getcwd() != "/Users/ming/NCU/Model on FHIR/Backend":
-    os.chdir("../")
 
-from patient_data_search import model_feature_search_with_patient_id
+from base.patient_data_search import model_feature_search_with_patient_id
 from config import configObject as config
-from feature_table import feature_table
+from base.feature_table import feature_table
 from fhirpy.base.exceptions import ResourceNotFound
 from app import return_model_result
 from models import *
@@ -21,6 +19,8 @@ app = cds.App()
 @app.patient_view("MoCab-CDS-Service", "The patient greeting service greets a patient!", title="Patient Greeter")
 def greeting(r: cds.PatientViewRequest, response: cds.Response):
     # TODO: authorize whether the server's url is real or not
+    r.context.patientId = 'test-03121002'
+    r.fhirServer = 'http://ming-desktop.ddns.net:8192/fhir'
     try:
         config["fhir_server"]["FHIR_SERVER_URL"] = r.fhirServer
     except Exception as e:
@@ -45,20 +45,32 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
             continue
 
         # TODO: 應該要有個表來表示正常數值的Range.
-        if patient_data_dictionary['predict_value'] > 0.8:
-            card = cds.Card.warning(f"Patient {r.context.patientId} is on the high risk of {model_name}.\n"
-                                    f"Model Score: {patient_data_dictionary['predict_value']}",
+        if patient_data_dictionary['predict_value'] > 3:
+            card = cds.Card.critical(f"Patient {r.context.patientId} has a high risk of \"{model_name}\".\n",
                                     cds.Source(label="MoCab CDS Service",
                                                url="https://www.mo-cab.dev",
-                                               icon="https://i.imgur.com/sFUFOyO.png"))
+                                               icon="https://i.imgur.com/sFUFOyO.png"),
+                                     suggestions=[cds.Suggestion(label="Suggestions", isRecommended=True)],
+                                     detail=f"On a high risk {model_name}, Model Score: {patient_data_dictionary['predict_value']}\nMore detail...")
+            card.add_link(cds.Link.smart("MoCab-SMART",
+                                         "https://mings.dev"))
+            pass
+        elif patient_data_dictionary['predict_value'] > 0.8:
+            card = cds.Card.warning(f"Patient {r.context.patientId} has a warning of \"{model_name}\".\n",
+                                    cds.Source(label="MoCab CDS Service",
+                                               url="https://www.mo-cab.dev",
+                                               icon="https://i.imgur.com/sFUFOyO.png"),
+                                    suggestions=[cds.Suggestion(label="Suggestions")],
+                                    detail=f"On a warning of {model_name}, Model Score: {patient_data_dictionary['predict_value']}\nMore detail...")
             card.add_link(cds.Link.smart("MoCab-SMART",
                                          "https://mings.dev"))
         else:
-            card = cds.Card.info(f"Patient {r.context.patientId} looks fine on {model_name}.\n"
-                                 f"Model Score: {patient_data_dictionary['predict_value']}",
+            card = cds.Card.info(f"Patient {r.context.patientId} looks fine on \"{model_name}\".\n",
                                  cds.Source(label="MoCab CDS Service",
                                             url="https://www.mo-cab.dev",
-                                            icon="https://i.imgur.com/sFUFOyO.png"))
+                                            icon="https://i.imgur.com/sFUFOyO.png"),
+                                 suggestions=[cds.Suggestion(label="Suggestions")],
+                                 detail=f"Looks fine on {model_name}, Model Score: {patient_data_dictionary['predict_value']}\nMore detail...")
 
             card.add_link(cds.Link.smart("MoCab-SMART",
                                          "https://mings.dev"))
