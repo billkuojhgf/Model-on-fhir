@@ -18,3 +18,11 @@ nsti,band,value,,5
 qcsi,respiratory_rate,value,,
 qcsi,spo2,value,,
 qcsi,o2_flow_rate,value,,
+diabetes,glucose,value,,2
+diabetes,diastolic_blood_pressure,value,,3
+diabetes,insulin,value,,5
+diabetes,bmi,formulation,[weight]/([height]/100)/([height]/100),6
+diabetes,pregnancies,value,,1
+diabetes,skinthickness,value,,4
+diabetes,diabetespedigreefunction,value,,7
+diabetes,age,value,,8

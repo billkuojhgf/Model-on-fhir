@@ -107,8 +107,7 @@ class DataAliveTime:
     def get_seconds(self):
         return self._seconds
 
-if __name__ != '__main__':
-    feature_table = _FeatureTable("./config/features.csv")
+feature_table = _FeatureTable("./config/features.csv")
 
 if __name__ == '__main__':
     from exceptions import FeatureCodeIsEmpty

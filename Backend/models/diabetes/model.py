@@ -10,7 +10,6 @@ def predict(data: dict):
     # fixed variable: pregnancies=6, skinthickness=35, diabetespedigreefunction=0.627
     # controlled variable: glucose, diastolic blood pressure, insulin, height, weight, age
 
-    # TODO: get_age要重做，想一個好的辦法來處理這種例外情節
     temp = [
         data['pregnancies']['value'],
         data['glucose']['value'],

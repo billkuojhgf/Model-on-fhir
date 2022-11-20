@@ -79,11 +79,11 @@ class _ModelFeature:
                     if result_regex_with_prefix:
                         if result_regex_with_prefix.group(2) not in prefix_list:
                             raise AttributeError(f"{row['case_of_category']} has invalid prefix.")
-                        temp['category'] = result_regex_with_prefix.group(1)
+                        temp['category'] = transform_to_correct_type(result_regex_with_prefix.group(1))
                         temp['prefix'] = result_regex_with_prefix.group(2)
                         temp['condition'] = transform_to_correct_type(result_regex_with_prefix.group(3))
                     elif result_regex_without_prefix:
-                        temp['category'] = result_regex_without_prefix.group(1)
+                        temp['category'] = transform_to_correct_type(result_regex_without_prefix.group(1))
                         temp['prefix'] = "eq"
                         temp['condition'] = transform_to_correct_type(result_regex_without_prefix.group(2))
 
@@ -116,8 +116,8 @@ def transform_to_correct_type(input_string: str):
 
     return output
 
-
-# feature_table = _ModelFeature("./config/ModelFeature.csv")
+if __name__ != "__main__":
+    feature_table = _ModelFeature("./config/ModelFeature.csv")
 
 if __name__ == "__main__":
     import json
