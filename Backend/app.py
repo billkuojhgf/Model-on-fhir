@@ -12,6 +12,7 @@ from flask_cors import CORS
 # TODO: munch可以將dictionary轉成Object，日後可能會用到
 from base import patient_data_search as ds
 from base.feature_table import feature_table
+from base.model_input_transformer import transformer
 from models import *
 
 app = Flask(__name__)
@@ -106,7 +107,9 @@ def return_model_result(patient_data_dict, api):
         TODO: 把return_model_result獨立成一個新的檔案，需要解決的技術難點: globals()[api]
     """
 
-    model_results = globals()[api].predict(patient_data_dict)
+    # transfer patient data into model preferred input
+    patient_data_list = transformer(patient_data_dict, api)
+    model_results = globals()[api].predict(patient_data_list)
     return model_results
 
 
