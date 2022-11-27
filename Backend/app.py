@@ -108,8 +108,9 @@ def return_model_result(patient_data_dict, api):
     """
 
     # transfer patient data into model preferred input
-    patient_data_list = transformer(patient_data_dict, api)
-    model_results = globals()[api].predict(patient_data_list)
+    # patient_data_list = transformer(patient_data_dict, api)
+    # model_results = globals()[api].predict(patient_data_list)
+    model_results = globals()[api].predict(patient_data_dict)
     return model_results
 
 
