@@ -14,15 +14,9 @@ def predict(data: dict):
     :return: float, Model Score
     """
     x = list()
-    temp = [
-        data['sea']['value'],
-        data['wbc']['value'],
-        data['crp']['value'],
-        data['seg']['value'],
-        data['band']['value']
-    ]
+    temp = data
     # Fixme: 路徑問題，待解決
-    loaded_model = joblib.load("./models/nsti/LR_model_ZheYu_5fea")
+    loaded_model = joblib.load("./models/nsti/LR_model_NSTI_5fea")
     x.append(temp)
     result = loaded_model.predict_proba(x)
     return result[:, 1][0]

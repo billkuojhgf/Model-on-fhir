@@ -32,8 +32,8 @@ if __name__ == '__main__':
 
     os.chdir("../")
 
-    from searchesets_new import get_patient_resources
-    from searchesets_new import get_resource_datetime_and_value
+    from search_sets import get_patient_resources
+    from search_sets import get_resource_datetime_and_value
     from feature_table import feature_table
 
     features__table = feature_table

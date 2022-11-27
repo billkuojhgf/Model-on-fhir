@@ -6,7 +6,7 @@ import re
         {
             model name: {
                 feature: {
-                    "type": category or value,
+                    "type": category or numeric or formula,
                     "case": [{
                         "prefix": prefix, prefix in ModelFeature or None
                         "condition": value, int or float or str, time would probably be needed(any situation?),
@@ -29,7 +29,8 @@ prefix_list = [
 
 type_list = [
     "category",
-    "value"
+    "numeric",
+    "formula"
 ]
 
 
@@ -39,20 +40,18 @@ class _ModelFeature:
 
     @classmethod
     def __create_table(cls, model_feature_table_position):
-        # two types of case_of_category, "regex with prefix" or "regex without prefix".
-        regex_with_prefix = re.compile(r"(.*?) ?= ?([a-zA-Z]{2})\|(.*)")
+        # two types of formulate, "regex with prefix" or "regex without prefix".
+        regex_with_prefix = re.compile(r"(.*?) ?= ?(([a-zA-Z]{2})\|(.*))")
         regex_without_prefix = re.compile(r"(.*?) ?= ?(.*)")
+        regex_take_value_prefix = re.compile(r"(\w{2})\|(\d*)")
         table = {}
 
         with open(model_feature_table_position, newline='') as model_feature_table:
             rows = csv.DictReader(model_feature_table)
             for row in rows:
                 # TODO: simple the code, combine these checks into an exception_check() function.
-                result_regex_with_prefix = regex_with_prefix.search(row["case_of_category"])
-                result_regex_without_prefix = regex_without_prefix.search(row['case_of_category'])
-                if not result_regex_with_prefix:
-                    if not result_regex_without_prefix:
-                        raise AttributeError(f"{row['case_of_category']} does not match the format.")
+                result_regex_with_prefix = regex_with_prefix.search(fr'{row["formulate"]}')
+                result_regex_without_prefix = regex_without_prefix.search(fr'{row["formulate"]}')
 
                 if str(row['type']).lower() not in type_list:
                     raise AttributeError(f"{row['type']} is not a legal type, expect {type_list}.")
@@ -67,21 +66,40 @@ class _ModelFeature:
                 # 撰寫該feature 的type
                 table[row['model']][row['feature']]["type"] = str(row['type']).lower()
 
+                table[row['model']][row['feature']]["index"] = int(row['index']) if row['index'] != "" else None
+
+                if str(row['type']).lower() == "formula":
+                    table[row['model']][row['feature']]["formula"] = row['formulate']
+
                 if str(row['type']).lower() == "category":
+                    # Check formulate regex while type is in category
+                    if not result_regex_with_prefix:
+                        if not result_regex_without_prefix:
+                            raise AttributeError(f"{row['formulate']} does not match the format.")
+
                     if "case" not in table[row['model']][row['feature']]:
                         table[row['model']][row['feature']]["case"] = list()
 
                     temp = {}
                     if result_regex_with_prefix:
-                        if result_regex_with_prefix.group(2) not in prefix_list:
-                            raise AttributeError(f"{row['case_of_category']} has invalid prefix.")
-                        temp['category'] = result_regex_with_prefix.group(1)
-                        temp['prefix'] = result_regex_with_prefix.group(2)
-                        temp['condition'] = result_regex_with_prefix.group(3)
+                        temp['category'] = transform_to_correct_type(result_regex_with_prefix.group(1))
+                        temp['conditions'] = []
+                        for i in result_regex_with_prefix.group(2).split("&"):
+                            if regex_take_value_prefix.search(fr"{i}").group(1) not in prefix_list:
+                                raise AttributeError(f"{row['formulate']} has invalid prefix.")
+                            temp_dict = {'prefix': regex_take_value_prefix.search(fr"{i}").group(1),
+                                         'condition': transform_to_correct_type(
+                                                regex_take_value_prefix.search(fr"{i}").group(2)
+                                            )
+                                         }
+                            temp['conditions'].append(temp_dict)
                     elif result_regex_without_prefix:
-                        temp['category'] = result_regex_without_prefix.group(1)
-                        temp['prefix'] = None
-                        temp['condition'] = result_regex_without_prefix.group(2)
+                        temp['category'] = transform_to_correct_type(result_regex_without_prefix.group(1))
+                        temp['conditions'] = [
+                            {'prefix': 'eq',
+                             'condition': transform_to_correct_type(result_regex_without_prefix.group(2))
+                             }
+                        ]
 
                     table[row['model']][row['feature']]["case"].append(temp)
 
@@ -95,10 +113,28 @@ class _ModelFeature:
         return self.table[model_name]
 
 
-# feature_table = _ModelFeature("./config/ModelFeature.csv")
+def transform_to_correct_type(input_string: str):
+    if input_string.lower() == 'true':
+        return True
+    elif input_string.lower() == 'false':
+        return False
+
+    try:
+        output = int(input_string)
+    except ValueError:
+        try:
+            output = float(input_string)
+        except ValueError:
+            output = input_string
+
+    return output
+
+
+if __name__ != "__main__":
+    feature_table = _ModelFeature("./config/transformation.csv")
 
 if __name__ == "__main__":
     import json
 
-    feature_table = _ModelFeature("../config/ModelFeature.csv")
-    print(json.dumps(feature_table.get_model_feature_dict("CHARM"), sort_keys=True, indent=4))
+    model_feature_table = _ModelFeature("../config/transformation.csv")
+    print(json.dumps(model_feature_table.get_model_feature_dict("CHARM"), sort_keys=True, indent=4))

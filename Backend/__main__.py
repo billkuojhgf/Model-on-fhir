@@ -1,8 +1,7 @@
 import os
 
-from mask import mask
+from models.qcsi.mask import mask
 from app import app
-from app import import_model
 from flask_cors import CORS
 
 

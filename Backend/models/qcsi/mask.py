@@ -1,6 +1,6 @@
-from mask_module import ConcreteMaskMart
-from mask_module import ConcreteMaskType
-from mask_module import ConcreteRegexSearch
+from models.qcsi.mask_module import ConcreteMaskMart
+from models.qcsi.mask_module import ConcreteMaskType
+from models.qcsi.mask_module import ConcreteRegexSearch
 import pandas as pd
 
 unit_type = ("o2_flow_rate", "fio2")
@@ -24,6 +24,7 @@ def mask():
         r"simpo.*mask.*?(\d{1,2}) *?l\/min",
         r"s\/m.*(\d{1,2})(l ?(\/min)?[^a-z]|liter|lpm)",
         r"mask.*?(\d{1,2} *?l)",
+        r"(^[0-9]*$)"
     ])
     simple_mask_fio2 = ConcreteRegexSearch(unit_type[1], [
         r"mask.*?(\d{2,3}) *(%)",
