@@ -1,15 +1,10 @@
-import os
-import csv
 import importlib
-import configparser
 
-from config import configObject as config
 from flask import Flask
 from flask import jsonify
 from flask import request
 from flask import abort
 from flask_cors import CORS
-# TODO: munch可以將dictionary轉成Object，日後可能會用到
 from base import patient_data_search as ds
 from base.feature_table import feature_table
 from base.model_input_transformer import transformer
@@ -45,7 +40,6 @@ def api_with_id(api):
             }
         }
     """
-    # TODO: the hour_alive_time request value
     if request.values.get('id') is None:
         abort(400, description="Please fill in patient's ID.")
     patient_id = request.values.get('id')
@@ -101,12 +95,6 @@ def api_with_post(api):
 
 
 def return_model_result(patient_data_dict, api):
-    """
-        Function return_model_result會對 model執行 predict的動作，回傳 model的結果
-        2022-10-10 新增一個新的動作：在丟入Model之前，會先將資料根據ModelFeature Table轉譯成model prefer的category
-        TODO: 把return_model_result獨立成一個新的檔案，需要解決的技術難點: globals()[api]
-    """
-
     # transfer patient data into model preferred input
     patient_data_list = transformer(patient_data_dict, api)
     model_results = globals()[api].predict(patient_data_list)
@@ -114,7 +102,6 @@ def return_model_result(patient_data_dict, api):
 
 
 def import_model():
-    # TODO: Need to figure out what actions does this function done, and optimize it.
     # get a handle on the module
     mdl = importlib.import_module('models')
 
@@ -132,6 +119,5 @@ def import_model():
 import_model()
 
 if __name__ == "__main__":
-    print(globals())
     app.debug = True
     app.run()

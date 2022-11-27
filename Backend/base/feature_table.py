@@ -1,6 +1,7 @@
 import csv
 import re
 from base.model_feature_table import transform_to_correct_type
+from config.config import configObject
 
 from base.exceptions import FeatureCodeIsEmpty
 
@@ -107,7 +108,8 @@ class DataAliveTime:
     def get_seconds(self):
         return self._seconds
 
-feature_table = _FeatureTable("./config/features.csv")
+
+feature_table = _FeatureTable(configObject['table_path']['FEATURE_TABLE'])
 
 if __name__ == '__main__':
     from exceptions import FeatureCodeIsEmpty

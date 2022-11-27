@@ -1,5 +1,6 @@
 import csv
 import re
+from config.config import configObject
 
 """
     data structure of _ModelFeature :
@@ -131,7 +132,7 @@ def transform_to_correct_type(input_string: str):
 
 
 if __name__ != "__main__":
-    feature_table = _ModelFeature("./config/transformation.csv")
+    feature_table = _ModelFeature(configObject['table_path']['TRANSFORMATION_TABLE'])
 
 if __name__ == "__main__":
     import json

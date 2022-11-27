@@ -1,7 +1,4 @@
 import os
-
-from models.qcsi.mask import mask
-from app import app
 from flask_cors import CORS
 
 
@@ -32,8 +29,9 @@ def init_models():
 
 
 if __name__ == '__main__':
-    mask()
     init_models()
+
+    from app import app
     CORS(app)
     app.debug = True
     app.run()
