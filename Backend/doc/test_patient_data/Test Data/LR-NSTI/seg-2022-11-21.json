@@ -1,0 +1,23 @@
+{
+  "resourceType": "Observation",
+  "id": "seg-example3",
+  "status": "final",
+  "code": {
+    "coding": [
+      {
+        "system": "https://www.cgmh.org.tw",
+        "code": "72A015",
+        "display": "Segment"
+      }
+    ],
+    "text": "Segment"
+  },
+  "subject": {
+    "reference": "Patient/test-03121002"
+  },
+  "effectiveDateTime": "2022-10-21",
+  "valueQuantity": {
+    "value": 86.6,
+    "unit": "%"
+  }
+}

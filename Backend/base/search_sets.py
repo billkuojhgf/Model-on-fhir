@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import configparser
+import logging
 import re
 from abc import ABC, abstractmethod
 from typing import Dict
@@ -57,7 +58,7 @@ class GetFuncMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient's data with {} method".format(self._strategy.__name__))
+        logging.info("Getting patient's data with {} method".format(self._strategy.__name__))
         resource = self._strategy.execute(self, resources)
         return resource
 
@@ -94,6 +95,16 @@ class GetMin(GetFuncInterface):
         @todo: Complete the code.
         @param data:
         @return:
+        """
+        pass
+
+class GetCount(GetFuncInterface):
+    def execute(self, data: dict) -> dict:
+        """
+
+        @TODO: Complete the code.
+        :param data:
+        :return:
         """
         pass
 
@@ -166,7 +177,7 @@ class ResourceMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient's data with {} resources".format(self._strategy.__name__))
+        logging.info("Getting patient's data with {} resources".format(self._strategy.__name__))
         global CLIENT
         CLIENT = SyncFHIRClient(config['fhir_server']['FHIR_SERVER_URL'])
         resource_list = self._strategy.search(self, patient_id, table, default_time, data_alive_time)
@@ -176,7 +187,7 @@ class ResourceMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient data's datetime with {} method".format(self._strategy.__name__))
+        logging.info("Getting patient data's datetime with {} method".format(self._strategy.__name__))
         resource_time = self._strategy.get_datetime(self, data_dictionary, default_time)
         return resource_time
 
@@ -184,7 +195,7 @@ class ResourceMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient data's value with the {} method".format(self._strategy.__name__))
+        logging.info("Getting patient data's value with the {} method".format(self._strategy.__name__))
         resource_value = self._strategy.get_value(self, data_dictionary)
         return resource_value
 
@@ -436,16 +447,16 @@ def get_patient_resources(patient_id, table, default_time: datetime, data_alive_
     search_type = str(table['search_type']).capitalize()
 
     # 沒有輸入search_type的狀況: 如Patient的get_age
+    # TODO: 這裡也要改，應該是default
     if search_type == "":
         patient_resource_result = patient_data_dict
-    # 如果有輸入search_type，檢查是不是latest, min or max
-    # XXX: 希望能是寫活的，可以自動判別目前已經開發出來的Concrete getFuncInterface
-    elif search_type in ('Latest', 'Min', 'Max'):
+    # 如果有輸入search_type，檢查是不是已經開發的type
+    elif f"Get{search_type}" in globals():
         patient_get_setting_mgmt = GetFuncMgmt()
         patient_get_setting_mgmt.strategy = globals()["Get" + search_type]
         patient_resource_result = patient_get_setting_mgmt.get_data_with_func(patient_data_dict)
     else:
-        raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
+        raise AttributeError(f"'{table['search_type']}' search_type is not supported now, check it again.")
 
     return patient_resource_result
 
@@ -486,7 +497,6 @@ if __name__ == "__main__":
     for key in feature__table:
         patient_result_dict[key] = \
             get_patient_resources(patient_id=patient__id, table=feature__table[key], default_time=default_time)
-        print(patient_result_dict[key])
 
     for key in patient_result_dict:
         print(key, get_resource_datetime_and_value(patient_result_dict[key], default_time))

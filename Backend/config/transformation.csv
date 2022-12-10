@@ -1,36 +1,36 @@
-model,feature,type,formulate,index
-CHARM,Chill,category,1=true,1
-CHARM,Chill,category,0=false,1
-CHARM,Hypothermia,category,1=lt|36,2
-CHARM,Hypothermia,category,0=ge|36,2
-CHARM,Anemia,category,1=lt|4,3
-CHARM,Anemia,category,0=ge|4,3
-CHARM,wide RAW,category,1=gt|14.5,4
-CHARM,wide RAW,category,0=le|14.5,4
-CHARM,history of Malignancy,category,1=true,5
-CHARM,history of Malignancy,category,0=false,5
-nsti,sea,category,1=true,1
-nsti,sea,category,0=false,1
-nsti,seg,numeric,,4
-nsti,band,numeric,,5
-nsti,wbc,numeric,,2
-nsti,crp,numeric,,3
-qcsi,respiratory_rate,category,0=le|22,1
-qcsi,respiratory_rate,category,1=gt|22&le|28,1
-qcsi,respiratory_rate,category,2=gt|28,1
-qcsi,spo2,category,0=gt|92,2
-qcsi,spo2,category,2=le|92&ge|89,2
-qcsi,spo2,category,5=lt|88,2
-qcsi,o2_flow_rate,category,0=le|2,3
-qcsi,o2_flow_rate,category,4=gt|2&le|4,3
-qcsi,o2_flow_rate,category,5=gt|4&le|6,3
-diabetes,glucose,numeric,,2
-diabetes,diastolic_blood_pressure,numeric,,3
-diabetes,insulin,numeric,,5
-diabetes,height,numeric,,
-diabetes,weight,numeric,,
-diabetes,bmi,formula,[weight]/([height]/100)/([height]/100),6
-diabetes,pregnancies,numeric,,1
-diabetes,skinthickness,numeric,,4
-diabetes,diabetespedigreefunction,numeric,,7
-diabetes,age,numeric,,8
+model,feature,type,formulate,index,unit
+CHARM,Chill,category,1=true,1,
+CHARM,Chill,category,0=false,1,
+CHARM,Hypothermia,category,1=lt|36,2,
+CHARM,Hypothermia,category,0=ge|36,2,
+CHARM,Anemia,category,1=lt|4,3,
+CHARM,Anemia,category,0=ge|4,3,
+CHARM,wide RAW,category,1=gt|14.5,4,
+CHARM,wide RAW,category,0=le|14.5,4,
+CHARM,history of Malignancy,category,1=true,5,
+CHARM,history of Malignancy,category,0=false,5,
+nsti,sea,category,1=true,1,
+nsti,sea,category,0=false,1,
+nsti,seg,numeric,,4,
+nsti,band,numeric,,5,
+nsti,wbc,numeric,,2,
+nsti,crp,numeric,,3,
+qcsi,respiratory_rate,category,0=le|22,1,
+qcsi,respiratory_rate,category,1=gt|22&le|28,1,
+qcsi,respiratory_rate,category,2=gt|28,1,
+qcsi,spo2,category,0=gt|92,2,
+qcsi,spo2,category,2=le|92&ge|89,2,
+qcsi,spo2,category,5=lt|88,2,
+qcsi,o2_flow_rate,category,0=le|2,3,
+qcsi,o2_flow_rate,category,4=gt|2&le|4,3,
+qcsi,o2_flow_rate,category,5=gt|4&le|6,3,
+diabetes,glucose,numeric,,2,
+diabetes,diastolic_blood_pressure,numeric,,3,
+diabetes,insulin,numeric,,5,
+diabetes,height,numeric,,,
+diabetes,weight,numeric,,,
+diabetes,bmi,formula,[weight]/([height]/100)/([height]/100),6,
+diabetes,pregnancies,numeric,,1,
+diabetes,skinthickness,numeric,,4,
+diabetes,diabetespedigreefunction,numeric,,7,
+diabetes,age,numeric,,8,

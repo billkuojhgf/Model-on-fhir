@@ -1,4 +1,6 @@
+import datetime
 import os
+import logging
 
 from models.qcsi.mask import mask
 from app import app
@@ -32,6 +34,9 @@ def init_models():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(filename=f"MoCab_DEBUG_logcat.txt",
+                        level=logging.DEBUG,
+                        format='%(asctime)s %(message)s')
     mask()
     init_models()
     CORS(app)

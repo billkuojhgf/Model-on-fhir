@@ -1,1 +1,1 @@
-__all__ = ['diabetes', 'nsti', 'qcsi']
+__all__ = ['diabetes', 'nsti', 'qcsi', 'template']

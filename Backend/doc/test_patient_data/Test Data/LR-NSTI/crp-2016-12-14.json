@@ -1,0 +1,23 @@
+{
+  "resourceType": "Observation",
+  "id": "crp-example1",
+  "status": "final",
+  "code": {
+    "coding": [
+      {
+        "system": "https://www.cgmh.org.tw",
+        "code": "72-547",
+        "display": "C-Reactive Protein"
+      }
+    ],
+    "text": "C-Reactive Protein"
+  },
+  "subject": {
+    "reference": "Patient/test-03121002"
+  },
+  "effectiveDateTime": "2016-12-14",
+  "valueQuantity": {
+    "value": 0.5,
+    "unit": "mg/dL"
+  }
+}

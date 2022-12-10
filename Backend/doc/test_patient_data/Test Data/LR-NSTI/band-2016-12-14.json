@@ -1,0 +1,23 @@
+{
+  "resourceType": "Observation",
+  "id": "band-example1",
+  "status": "final",
+  "code": {
+    "coding": [
+      {
+        "system": "https://www.cgmh.org.tw",
+        "code": "72B015",
+        "display": "Band"
+      }
+    ],
+    "text": "Band"
+  },
+  "subject": {
+    "reference": "Patient/test-03121002"
+  },
+  "effectiveDateTime": "2016-12-14",
+  "valueQuantity": {
+    "value": 0,
+    "unit": "%"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "resourceType": "Observation",
+  "id": "wbc-example3",
+  "status": "final",
+  "code": {
+    "coding": [
+      {
+        "system": "https://www.cgmh.org.tw",
+        "code": "72A001",
+        "display": "white blood cell"
+      }
+    ],
+    "text": "white blood cell"
+  },
+  "subject": {
+    "reference": "Patient/test-03121002"
+  },
+  "effectiveDateTime": "2022-09-21",
+  "valueQuantity": {
+    "value": 12900,
+    "unit": "/mm3"
+  }
+}

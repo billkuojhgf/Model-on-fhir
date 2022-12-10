@@ -3,13 +3,6 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\config\ModelFeature.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\config\features.csv">
           <value>
             <Attribute>
@@ -18,6 +11,20 @@
           </value>
         </entry>
         <entry key="\config\features_default.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\config\transformation.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\config\unit_conversion.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
