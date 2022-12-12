@@ -1,10 +1,12 @@
 import {getResourceDatetimeAndValue} from "@/baseModel/searchSets";
+// import FHIR from "fhirclient"
 
 const getData = async (patient_id, featureObj) => {
     // featureObj should be an object with model's feature set. E.g. diabetes
     let returnObj = {}
     if(typeof(featureObj) != "object")
         return
+
 
     for (const [key, valueObj] of Object.entries(featureObj)) {
         // TODO: 在加入更多判斷之後，這行程式碼可以槓掉。目前只支援observation

@@ -16,6 +16,10 @@ const client = FHIR.client(
     }
 )
 
+/*
+    plt.plot([23, 34, ...], foo='bar')
+    plt.plot(0, 10, 0, 80)
+ */
 
 
 /**
