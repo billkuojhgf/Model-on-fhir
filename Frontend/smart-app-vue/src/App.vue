@@ -112,7 +112,7 @@ export default {
     let modelFeatureArray = [] // Stores all feature
     let featureCollectObject
 
-    console.log(featureTable)
+    // console.log(featureTable)
     for (const [key, value] of Object.entries(featureTable)) {
       featureCollectObject = {}
       featureCollectObject.name = key

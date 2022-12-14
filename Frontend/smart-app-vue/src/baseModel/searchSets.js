@@ -16,11 +16,6 @@ const client = FHIR.client(
     }
 )
 
-/*
-    plt.plot([23, 34, ...], foo='bar')
-    plt.plot(0, 10, 0, 80)
- */
-
 
 /**
  * Abstract Class ResourceInterface
@@ -62,8 +57,8 @@ class Observation extends ResourcesInterface {
     async search(patient_id, code) {
         let url = encodeURI(`Observation?subject=${patient_id}&code=${code}&_sort=date`)
         let result = {}
-        result = await client
-            .request(url)
+        result = await FHIR.oauth2.ready()
+            .then(client => client.request(url))
             .then(async response => {
                 let resource = []
                 if (response.total === 0) {
