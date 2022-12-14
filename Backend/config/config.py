@@ -10,7 +10,7 @@ _config = {
         "FHIR_SERVER_URL": "http://ming-desktop.ddns.net:8192/fhir",
     },
     "bulk_server": {
-        "BULK_SERVER_URL": "http://localhost:8082/fhir"
+        "BULK_SERVER_URL": "http://localhost:8090/fhir"
     },
 }
 
