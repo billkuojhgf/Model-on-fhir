@@ -10,7 +10,7 @@ from config import configObject as config
 from base.feature_table import feature_table
 from fhirpy.base.exceptions import ResourceNotFound
 from app import return_model_result
-from models import *
+from mocab_models import *
 
 
 app = cds.App()
@@ -19,13 +19,14 @@ app = cds.App()
 @app.patient_view("MoCab-CDS-Service", "The patient greeting service greets a patient!", title="Patient Greeter")
 def greeting(r: cds.PatientViewRequest, response: cds.Response):
     # TODO: authorize whether the server's url is real or not
-    r.context.patientId = 'test-03121002'
-    r.fhirServer = 'http://ming-desktop.ddns.net:8192/fhir'
+    # r.context.patientId = 'test-03121002'
+    # r.fhirServer = 'http://ming-desktop.ddns.net:8192/fhir'
     try:
         config["fhir_server"]["FHIR_SERVER_URL"] = r.fhirServer
     except Exception as e:
         print(e)
-    for model_name in feature_table.get_exist_model_name():
+    # for model_name in feature_table.get_exist_model_name():
+    for model_name in ['diabetes', 'nsti']:
         """
             1. 首先是要確認病患ID在資料庫中的資料集是否足夠，所以這時候會去試探Server看是否有數據
             2. 確認有資料後，就會將數據丟入Model中進行預測
@@ -52,8 +53,8 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
                                                icon="https://i.imgur.com/sFUFOyO.png"),
                                      suggestions=[cds.Suggestion(label="Suggestions", isRecommended=True)],
                                      detail=f"On a high risk {model_name}, Model Score: {patient_data_dictionary['predict_value']}\nMore detail...")
-            card.add_link(cds.Link.smart("MoCab-SMART",
-                                         "https://mings.dev"))
+            card.add_link(cds.Link.smart("MoCab-App",
+                                         "http://localhost:5000/launch"))
             pass
         elif patient_data_dictionary['predict_value'] > 0.8:
             card = cds.Card.warning(f"Patient {r.context.patientId} has a warning of \"{model_name}\".\n",
@@ -62,8 +63,8 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
                                                icon="https://i.imgur.com/sFUFOyO.png"),
                                     suggestions=[cds.Suggestion(label="Suggestions")],
                                     detail=f"On a warning of {model_name}, Model Score: {patient_data_dictionary['predict_value']}\nMore detail...")
-            card.add_link(cds.Link.smart("MoCab-SMART",
-                                         "https://mings.dev"))
+            card.add_link(cds.Link.smart("MoCab-App",
+                                         "http://localhost:5000/launch"))
         else:
             card = cds.Card.info(f"Patient {r.context.patientId} looks fine on \"{model_name}\".\n",
                                  cds.Source(label="MoCab CDS Service",
@@ -72,8 +73,8 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
                                  suggestions=[cds.Suggestion(label="Suggestions")],
                                  detail=f"Looks fine on {model_name}, Model Score: {patient_data_dictionary['predict_value']}\nMore detail...")
 
-            card.add_link(cds.Link.smart("MoCab-SMART",
-                                         "https://mings.dev"))
+            card.add_link(cds.Link.smart("MoCab-App",
+                                         "http://localhost:5000/launch"))
         response.add_card(card)
     response.httpStatusCode = 200
 

@@ -12,6 +12,9 @@ _config = {
     "bulk_server": {
         "BULK_SERVER_URL": "http://localhost:8082/fhir"
     },
+    "frontend": {
+        "FRONTEND_URL": "http://localhost:8080"
+    }
 }
 
 configObject = _config
