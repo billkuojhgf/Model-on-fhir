@@ -86,4 +86,3 @@ def transformer(patient_data_dict: dict, model: str) -> list:
     result_list = pack_list(model_data_dict, transform_style)
 
     return result_list
-

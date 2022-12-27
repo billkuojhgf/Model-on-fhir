@@ -1,13 +1,13 @@
 import os
 
-from models.qcsi.mask import mask
+from mocab_models.qcsi.mask import mask
 from app import app
 from flask_cors import CORS
 
 
 def init_models():
     names = []
-    model_path = r"./models"
+    model_path = r"mocab_models"
     for model_path_dir in os.listdir(model_path):
         # 阻絕 "__pycache__" folder
         if model_path_dir.startswith("_"):
@@ -26,7 +26,7 @@ def init_models():
                 os.path.exists("{}/{}/model.py".format(model_path, model_path_dir)):
             names.append(model_path_dir)
 
-    models_init_file = open("./models/__init__.py", "w")
+    models_init_file = open("mocab_models/__init__.py", "w")
     models_init_file.write("__all__ = {}\n".format(names))
     models_init_file.close()
 

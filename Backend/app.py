@@ -1,22 +1,20 @@
-import os
-import csv
 import importlib
-import configparser
 
-from config import configObject as config
 from flask import Flask
+from flask import abort
 from flask import jsonify
 from flask import request
-from flask import abort
 from flask_cors import CORS
-# TODO: munch可以將dictionary轉成Object，日後可能會用到
-from base import patient_data_search as ds
-from base.feature_table import feature_table
-from base.model_input_transformer import transformer
-from models import *
 
 app = Flask(__name__)
 CORS(app)
+
+from base import patient_data_search as ds
+from base.feature_table import feature_table
+from base.model_input_transformer import transformer
+from mocab_models import *
+import smart_on_fhir
+
 
 # Map the csv into dictionary
 table = feature_table
@@ -116,7 +114,7 @@ def return_model_result(patient_data_dict, api):
 def import_model():
     # TODO: Need to figure out what actions does this function done, and optimize it.
     # get a handle on the module
-    mdl = importlib.import_module('models')
+    mdl = importlib.import_module('mocab_models')
 
     # is there an __all__?  if so respect it
     if "__all__" in mdl.__dict__:

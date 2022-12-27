@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Dict
 
 from config import configObject as config
+import smart_on_fhir
 from dateutil.relativedelta import relativedelta
 from fhirpy import SyncFHIRClient
 from fhirpy.base.exceptions import ResourceNotFound
@@ -13,7 +14,7 @@ from fhirpy.base.searchset import FHIR_DATE_FORMAT
 from fhirpy.base.searchset import datetime
 from fhirpy.lib import SyncFHIRResource
 
-CLIENT: SyncFHIRClient = SyncFHIRClient(config['fhir_server']['FHIR_SERVER_URL'])
+CLIENT: SyncFHIRClient or None = None
 
 
 # FHIR_DATE_FORMAT='%Y-%m-%d'
@@ -168,7 +169,7 @@ class ResourceMgmt:
 
         print("Getting patient's data with {} resources".format(self._strategy.__name__))
         global CLIENT
-        CLIENT = SyncFHIRClient(config['fhir_server']['FHIR_SERVER_URL'])
+        # CLIENT = SyncFHIRClient(config['fhir_server']['FHIR_SERVER_URL'])
         resource_list = self._strategy.search(self, patient_id, table, default_time, data_alive_time)
         return resource_list
 
@@ -420,6 +421,14 @@ def get_patient_resources(patient_id, table, default_time: datetime, data_alive_
     Observation因為會有component-code的可能，所以相關程式碼會比較複雜
     Condition目前相對單純，就是使用時間大於等於條件與code等於多少就好了
     """
+    global CLIENT
+    CLIENT = SyncFHIRClient(
+        url=config['fhir_server']['FHIR_SERVER_URL'] if smart_on_fhir.smart_serverObj is None \
+            else smart_on_fhir.smart_serverObj.base_uri,
+        authorization=None if smart_on_fhir.smart_serverObj is None \
+            else f'Bearer {smart_on_fhir.smart_serverObj.auth.access_token}'
+    )
+
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(table["type_of_data"]).capitalize()]
     patient_data_dict = patient_resources_mgmt.get_data_with_resources(patient_id, table, default_time, data_alive_time)
@@ -474,6 +483,7 @@ def get_resource_datetime_and_value(data: Dict, default_time: datetime) -> (str 
 
 if __name__ == "__main__":
     import os
+
     os.chdir("../")
     from feature_table import feature_table
 
