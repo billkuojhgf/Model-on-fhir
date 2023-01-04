@@ -14,7 +14,7 @@ from fhirpy.base.searchset import FHIR_DATE_FORMAT
 from fhirpy.base.searchset import datetime
 from fhirpy.lib import SyncFHIRResource
 
-CLIENT: SyncFHIRClient or None = None
+CLIENT: SyncFHIRClient
 
 
 # FHIR_DATE_FORMAT='%Y-%m-%d'
@@ -253,22 +253,28 @@ def _return_date_time_formatter(datetime_string: str) -> str or None:
 
 class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
     def search(self, patient_id: str, table: dict, default_time: datetime, data_alive_time=None) -> Dict:
-        data_time_since = (default_time - relativedelta(
-            years=table['data_alive_time'].get_years(),
-            months=table['data_alive_time'].get_months(),
-            days=table['data_alive_time'].get_days(),
-            hours=table['data_alive_time'].get_hours(),
-            minutes=table['data_alive_time'].get_minutes(),
-            seconds=table['data_alive_time'].get_seconds()
-        )).strftime(FHIR_DATE_FORMAT)
-        code = table['code']
         default_value = table['default_value']
+
+        params = {
+            "subject": patient_id,
+            "code": table['code'],
+        }
+
+        # if data_alive_time is not none, then ignore them
+        # Usually used for SMART endpoint.
+        if table['data_alive_time'] is not None:
+            params['date__ge'] = (default_time - relativedelta(
+                years=table['data_alive_time'].get_years(),
+                months=table['data_alive_time'].get_months(),
+                days=table['data_alive_time'].get_days(),
+                hours=table['data_alive_time'].get_hours(),
+                minutes=table['data_alive_time'].get_minutes(),
+                seconds=table['data_alive_time'].get_seconds()
+            )).strftime(FHIR_DATE_FORMAT)
 
         resources = CLIENT.resources('Observation')
         search = resources.search(
-            subject=patient_id,
-            date__ge=data_time_since,
-            code=code
+            **params
         ).sort('-date')
         results = search.fetch()
         is_in_component = False
@@ -278,11 +284,9 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
             如果resources的長度為0，代表Server裡面沒有這個病患的code data，
             可能是在component-code之中，所以再透過component-code去搜尋
             """
-
+            params['component_code'] = params.pop('code')
             search = resources.search(
-                subject=patient_id,
-                date__ge=data_time_since,
-                component_code=code
+                **params
             ).sort('-date')
             results = search.fetch()
             is_in_component = True
@@ -294,14 +298,14 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
                 if default_value is None:
                     raise ResourceNotFound(
                         'Could not find the resources {code} under time {time}, no enough data for the patient'.format(
-                            code=code,
-                            time=data_time_since
+                            code=params['code'],
+                            time=params['date__ge']
                         )
                     )
                 else:
                     results = default_value
 
-        return {'resource': results, 'component_code': code if is_in_component else None,
+        return {'resource': results, 'component_code': params['code'] if is_in_component else None,
                 'type': 'Observation'}
 
     def get_datetime(self, dictionary: dict, default_time) -> str | None:
@@ -332,13 +336,15 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
 
 class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
     def search(self, patient_id: str, table: dict, default_time: datetime, data_alive_time=None) -> Dict:
-        code = table['code']
+        params = {
+            'subject': patient_id,
+            'code': table['code']
+        }
 
         resources = CLIENT.resources('Condition')
         # FIXME: 等等，date__ge呢?
         search = resources.search(
-            subject=patient_id,
-            code=code
+            **params
         ).sort('recorded-date')
         results = search.fetch()
 
@@ -439,16 +445,31 @@ def get_patient_resources(patient_id,
 
     # TODO: Replace CLIENT object in clever way
     global CLIENT
-    CLIENT = SyncFHIRClient(
-        url=config['fhir_server']['FHIR_SERVER_URL'] if smart_on_fhir.smart_serverObj is None \
-            else smart_on_fhir.smart_serverObj.base_uri,
-        authorization=None if smart_on_fhir.smart_serverObj is None \
-            else f'Bearer {smart_on_fhir.smart_serverObj.auth.access_token}'
-    )
+    if not smart_enabled:
+        CLIENT = SyncFHIRClient(
+            url=config['fhir_server']['FHIR_SERVER_URL']
+        )
+    else:
+        CLIENT = SyncFHIRClient(
+            url=smart_on_fhir.smart_serverObj.base_uri,
+            authorization=f'Bearer {smart_on_fhir.smart_serverObj.auth.access_token}'
+        )
 
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(table["type_of_data"]).capitalize()]
-    patient_data_dict_origin = patient_resources_mgmt.get_data_with_resources(patient_id, table, default_time, data_alive_time)
+    patient_data_dict = patient_resources_mgmt.get_data_with_resources(patient_id,
+                                                                       table,
+                                                                       default_time,
+                                                                       data_alive_time)
+
+    patient_data_dict_origin = {}
+    if smart_enabled:
+        table_for_smart = table.copy()
+        table_for_smart['data_alive_time'] = None
+        patient_data_dict_origin = patient_resources_mgmt.get_data_with_resources(patient_id,
+                                                                                  table_for_smart,
+                                                                                  default_time,
+                                                                                  data_alive_time)
 
     # 然後再根據不同的欲取得的資料設定(如最新的資料, 最大的資料, 最小的資料...)從data_list中取得符合設定的data
     # 該設定可以在features.csv中的search_type column設定
@@ -460,7 +481,6 @@ def get_patient_resources(patient_id,
     因為在Patient resources中，age會直接計算出年齡並回傳結果，所以不用再取得數值了
     """
     search_type = str(table['search_type']).capitalize()
-    patient_data_dict = patient_data_dict_origin.copy()
     # 沒有輸入search_type的狀況: 如Patient的get_age
     if search_type == "":
         patient_resource_result = patient_data_dict
@@ -473,11 +493,10 @@ def get_patient_resources(patient_id,
     else:
         raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
 
-    print(patient_data_dict_origin)
-    if not smart_enabled:
-        return patient_resource_result
-    else:
+    if smart_enabled:
         return patient_data_dict_origin, patient_resource_result
+    else:
+        return patient_resource_result
 
 
 def get_resource_datetime(data: Dict, default_time: datetime) -> str | None:

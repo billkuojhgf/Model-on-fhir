@@ -1,12 +1,10 @@
 from app import mocab_app
-from urllib.parse import unquote
 from fhirclient.client import FHIRClient
 from fhirclient.server import FHIRServer
-from flask import request, redirect, session
-from config import configObject as config
+from flask import request, redirect
 
-smart_serverObj: FHIRServer or None = None
-smart_clientObj: None or FHIRClient = None
+smart_serverObj: FHIRServer
+smart_clientObj: FHIRClient
 
 
 @mocab_app.route("/launch", methods=['GET'])

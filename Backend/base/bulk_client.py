@@ -12,7 +12,7 @@ import requests
 
 
 # Fixed variables
-COMMAND = '/Patient/$export'
+COMMAND = '/$export'
 RESOURCES = [
     "Patient",
     "Group"

@@ -48,9 +48,10 @@ def api_with_id(api):
 
     # if smart parameter sets to true, function redirects to api_with_id_and_smart
     smart_enable = str2bool(request.values.get('smart'))
+
     if smart_enable:
         if not smart_on_fhir.check_auth():
-            abort(401, description="SMART Auth not enabled. Launch MoCab SMART Endpoint in EHR First.")
+            abort(401, description="SMART Auth is not enabled. Launch MoCab SMART Endpoint in EHR First.")
 
     patient_id = request.values.get('id')
     hour_alive_time = request.values.get('hour_alive_time')  # None if request has no hour_alive_time parameter
@@ -61,7 +62,10 @@ def api_with_id(api):
     return jsonify(patient_data_dict)
 
 
-def str2bool(string: str) -> bool:
+def str2bool(string: str or None) -> bool:
+    if type(string) is not str:
+        return string
+
     true_string = ('true', '1', 't', 'y', 'yes', 'yeah', 'yup', "on")
     false_string = ('false', '0', 'f', 'n', 'no', 'nope', 'nan', 'off')
     if string.lower() in true_string:
