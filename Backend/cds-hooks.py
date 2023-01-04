@@ -13,10 +13,10 @@ from app import return_model_result
 from mocab_models import *
 
 
-app = cds.App()
+cds_app = cds.App()
 
 
-@app.patient_view("MoCab-CDS-Service", "The patient greeting service greets a patient!", title="Patient Greeter")
+@cds_app.patient_view("MoCab-CDS-Service", "The patient greeting service greets a patient!", title="Patient Greeter")
 def greeting(r: cds.PatientViewRequest, response: cds.Response):
     # TODO: authorize whether the server's url is real or not
     # r.context.patientId = 'test-03121002'
@@ -82,4 +82,4 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
 if __name__ == '__main__':
     debug = os.environ.get('DEBUG', True)
     port = os.environ.get("PORT", 5001)
-    app.serve(host="0.0.0.0", debug=debug, port=port)
+    cds_app.serve(host="0.0.0.0", debug=debug, port=port)

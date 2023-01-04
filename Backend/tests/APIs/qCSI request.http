@@ -41,3 +41,6 @@ Content-Type: application/json
 
 ### Request GET qcsi api with patient's id
 GET http://localhost:5000/qcsi?id=test-03121002
+
+### Request GET qcsi api with patient's id in SMART
+GET http://localhost:5000/qcsi?id=test-03121002&smart=true

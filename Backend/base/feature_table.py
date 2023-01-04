@@ -107,6 +107,7 @@ class DataAliveTime:
     def get_seconds(self):
         return self._seconds
 
+
 feature_table = _FeatureTable("./config/features.csv")
 
 if __name__ == '__main__':

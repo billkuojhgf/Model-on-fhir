@@ -1,4 +1,4 @@
-from app import app
+from app import mocab_app
 from urllib.parse import unquote
 from fhirclient.client import FHIRClient
 from fhirclient.server import FHIRServer
@@ -9,7 +9,7 @@ smart_serverObj: FHIRServer or None = None
 smart_clientObj: None or FHIRClient = None
 
 
-@app.route("/launch", methods=['GET'])
+@mocab_app.route("/launch", methods=['GET'])
 def smart_launch():
     # TODO: Change redirect_uri
     settings = {
@@ -25,7 +25,8 @@ def smart_launch():
 
     return redirect(smart_serverObj.authorize_uri)
 
-@app.route("/fhir-app", methods=["GET"])
+
+@mocab_app.route("/fhir-app", methods=["GET"])
 def callback():
     global smart_clientObj, smart_serverObj
     try:
@@ -35,3 +36,9 @@ def callback():
     return "Authenticated."
 
 
+def check_auth():
+    global smart_serverObj
+    try:
+        return smart_serverObj.ready
+    except AttributeError:
+        return False

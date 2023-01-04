@@ -1,7 +1,7 @@
 import os
 
 from mocab_models.qcsi.mask import mask
-from app import app
+from app import mocab_app
 from flask_cors import CORS
 
 
@@ -34,6 +34,6 @@ def init_models():
 if __name__ == '__main__':
     mask()
     init_models()
-    CORS(app)
-    app.debug = True
-    app.run()
+    CORS(mocab_app)
+    mocab_app.debug = True
+    mocab_app.run()

@@ -118,6 +118,7 @@ class GetLatest(GetFuncInterface):
         if type(data_list) == list:
             if len(data_list) == 0:
                 # TODO: 顯示什麼resources沒有data
+                # TODO: 沒有Data也要繼續執行下一步
                 raise Exception("No data inside the data list.")
             # 如果data_list裡面是有資料的，就回傳
             data['resource'] = data_list[0]
@@ -398,9 +399,14 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
             return dictionary['resource']
 
 
-def get_patient_resources(patient_id, table, default_time: datetime, data_alive_time=None) -> dict:
+def get_patient_resources(patient_id,
+                          table,
+                          default_time: datetime,
+                          data_alive_time=None,
+                          smart_enabled=False) -> dict or (dict, dict):
     """
-    The function will get the patient's resources from the database and return
+    The function gets the patient's resources from the database and return
+    :param smart_enabled: whether this is a request from SMART APP.
     :param patient_id: patient's id
     :param table: feature's table,
                   dict type with {'code', 'data_alive_time', 'type_of_data', 'default_value', 'search_type'}
@@ -408,8 +414,17 @@ def get_patient_resources(patient_id, table, default_time: datetime, data_alive_
     :param data_alive_time: the time range, start from the default_time.
                             e.g. if the data_alive_time is 2 years, and the default_time is not, the server will search
                                  the data that is between now and two years ago
-    :return: Dict, {"resource": SyncFHIRResources, "component-code": str or None,
-                    "type": str(Resource name with capitalized)}
+    :return:
+            smart_enabled is False:
+                Dict,
+                    {"resource": SyncFHIRResources, "component-code": str or None,
+                        "type": str(Resource name with capitalized)}
+            smart_enabled is True:
+                Dict, Dict
+                    {"resource": [SyncFHIRResources...], "component-code": str or None,
+                        "type": str(Resource name with capitalized)},
+                    {"resource": SyncFHIRResources, "component-code": str or None,
+                        "type": str(Resource name with capitalized)}
     """
 
     # 先從FHIR Server取得一系列的病患數據。
@@ -421,6 +436,8 @@ def get_patient_resources(patient_id, table, default_time: datetime, data_alive_
     Observation因為會有component-code的可能，所以相關程式碼會比較複雜
     Condition目前相對單純，就是使用時間大於等於條件與code等於多少就好了
     """
+
+    # TODO: Replace CLIENT object in clever way
     global CLIENT
     CLIENT = SyncFHIRClient(
         url=config['fhir_server']['FHIR_SERVER_URL'] if smart_on_fhir.smart_serverObj is None \
@@ -431,9 +448,9 @@ def get_patient_resources(patient_id, table, default_time: datetime, data_alive_
 
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(table["type_of_data"]).capitalize()]
-    patient_data_dict = patient_resources_mgmt.get_data_with_resources(patient_id, table, default_time, data_alive_time)
+    patient_data_dict_origin = patient_resources_mgmt.get_data_with_resources(patient_id, table, default_time, data_alive_time)
 
-    # 然後再根據不同的欲取得的資料設定(如最新的資料, 最大的資料, 最小的資料...)來從data_list中取得符合設定的data
+    # 然後再根據不同的欲取得的資料設定(如最新的資料, 最大的資料, 最小的資料...)從data_list中取得符合設定的data
     # 該設定可以在features.csv中的search_type column設定
 
     """
@@ -443,7 +460,7 @@ def get_patient_resources(patient_id, table, default_time: datetime, data_alive_
     因為在Patient resources中，age會直接計算出年齡並回傳結果，所以不用再取得數值了
     """
     search_type = str(table['search_type']).capitalize()
-
+    patient_data_dict = patient_data_dict_origin.copy()
     # 沒有輸入search_type的狀況: 如Patient的get_age
     if search_type == "":
         patient_resource_result = patient_data_dict
@@ -456,7 +473,11 @@ def get_patient_resources(patient_id, table, default_time: datetime, data_alive_
     else:
         raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
 
-    return patient_resource_result
+    print(patient_data_dict_origin)
+    if not smart_enabled:
+        return patient_resource_result
+    else:
+        return patient_data_dict_origin, patient_resource_result
 
 
 def get_resource_datetime(data: Dict, default_time: datetime) -> str | None:
