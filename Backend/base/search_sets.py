@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import configparser
 import re
 from abc import ABC, abstractmethod
@@ -284,9 +283,10 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
             如果resources的長度為0，代表Server裡面沒有這個病患的code data，
             可能是在component-code之中，所以再透過component-code去搜尋
             """
-            params['component_code'] = params.pop('code')
+            params_component = params.copy()
+            params_component['component_code'] = params_component.pop('code')
             search = resources.search(
-                **params
+                **params_component
             ).sort('-date')
             results = search.fetch()
             is_in_component = True
@@ -408,11 +408,9 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
 def get_patient_resources(patient_id,
                           table,
                           default_time: datetime,
-                          data_alive_time=None,
-                          smart_enabled=False) -> dict or (dict, dict):
+                          data_alive_time=None) -> dict or (dict, dict):
     """
     The function gets the patient's resources from the database and return
-    :param smart_enabled: whether this is a request from SMART APP.
     :param patient_id: patient's id
     :param table: feature's table,
                   dict type with {'code', 'data_alive_time', 'type_of_data', 'default_value', 'search_type'}
@@ -421,16 +419,9 @@ def get_patient_resources(patient_id,
                             e.g. if the data_alive_time is 2 years, and the default_time is not, the server will search
                                  the data that is between now and two years ago
     :return:
-            smart_enabled is False:
-                Dict,
-                    {"resource": SyncFHIRResources, "component-code": str or None,
-                        "type": str(Resource name with capitalized)}
-            smart_enabled is True:
-                Dict, Dict
-                    {"resource": [SyncFHIRResources...], "component-code": str or None,
-                        "type": str(Resource name with capitalized)},
-                    {"resource": SyncFHIRResources, "component-code": str or None,
-                        "type": str(Resource name with capitalized)}
+            Dict,
+                {"resource": SyncFHIRResources, "component-code": str or None,
+                    "type": str(Resource name with capitalized)}
     """
 
     # 先從FHIR Server取得一系列的病患數據。
@@ -445,7 +436,7 @@ def get_patient_resources(patient_id,
 
     # TODO: Replace CLIENT object in clever way
     global CLIENT
-    if not smart_enabled:
+    if not smart_on_fhir.check_auth():
         CLIENT = SyncFHIRClient(
             url=config['fhir_server']['FHIR_SERVER_URL']
         )
@@ -457,19 +448,11 @@ def get_patient_resources(patient_id,
 
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(table["type_of_data"]).capitalize()]
+
     patient_data_dict = patient_resources_mgmt.get_data_with_resources(patient_id,
                                                                        table,
                                                                        default_time,
                                                                        data_alive_time)
-
-    patient_data_dict_origin = {}
-    if smart_enabled:
-        table_for_smart = table.copy()
-        table_for_smart['data_alive_time'] = None
-        patient_data_dict_origin = patient_resources_mgmt.get_data_with_resources(patient_id,
-                                                                                  table_for_smart,
-                                                                                  default_time,
-                                                                                  data_alive_time)
 
     # 然後再根據不同的欲取得的資料設定(如最新的資料, 最大的資料, 最小的資料...)從data_list中取得符合設定的data
     # 該設定可以在features.csv中的search_type column設定
@@ -482,21 +465,65 @@ def get_patient_resources(patient_id,
     """
     search_type = str(table['search_type']).capitalize()
     # 沒有輸入search_type的狀況: 如Patient的get_age
-    if search_type == "":
+    if search_type == '':
         patient_resource_result = patient_data_dict
     # 如果有輸入search_type，檢查是不是latest, min or max
     # XXX: 希望能是寫活的，可以自動判別目前已經開發出來的Concrete getFuncInterface
-    elif search_type in ('Latest', 'Min', 'Max'):
-        patient_get_setting_mgmt = GetFuncMgmt()
-        patient_get_setting_mgmt.strategy = globals()["Get" + search_type]
-        patient_resource_result = patient_get_setting_mgmt.get_data_with_func(patient_data_dict)
     else:
-        raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
+        try:
+            patient_get_setting_mgmt = GetFuncMgmt()
+            patient_get_setting_mgmt.strategy = globals()["Get" + search_type]
+            patient_resource_result = patient_get_setting_mgmt.get_data_with_func(patient_data_dict)
+        except KeyError:
+            raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
 
-    if smart_enabled:
-        return patient_data_dict_origin, patient_resource_result
-    else:
-        return patient_resource_result
+    return patient_resource_result
+
+
+def get_patient_resources_data_set(patient_id,
+                                   table,
+                                   default_time: datetime,
+                                   data_alive_time=None) -> dict or (dict, dict):
+    """
+    The function gets the history of patient's resources from the database and return
+    :param patient_id: patient's id
+    :param table: feature's table,
+                  dict type with {'code', 'data_alive_time', 'type_of_data', 'default_value', 'search_type'}
+    :param default_time: the time of the default, for model training used. DEFAULT=datetime.now()
+    :param data_alive_time: the time range, start from the default_time.
+                            e.g. if the data_alive_time is 2 years, and the default_time is not, the server will search
+                                 the data that is between now and two years ago
+    :return:
+            Dict
+                {"resource": [SyncFHIRResources...], "component-code": str or None,
+                    "type": str(Resource name with capitalized)}
+    """
+
+    # 先從FHIR Server取得一系列的病患數據。
+    # GetResourceMgmt的全稱是Get Patient Data Resource Management, 為呼叫各種不同FHIR Resources的管理工具
+    # 透過obj.strategy設定要找尋的FHIR Resource, 然後使用get_patient_resources()來執行搜尋
+    """
+    主要有三種不同的Resources: Observation, Condition, Patient
+
+    Observation因為會有component-code的可能，所以相關程式碼會比較複雜
+    Condition目前相對單純，就是使用時間大於等於條件與code等於多少就好了
+    """
+
+    # TODO: Replace CLIENT object in clever way
+    global CLIENT
+    CLIENT = SyncFHIRClient(
+        url=smart_on_fhir.smart_serverObj.base_uri,
+        authorization=f'Bearer {smart_on_fhir.smart_serverObj.auth.access_token}'
+    )
+
+    patient_resources_mgmt = ResourceMgmt()
+    patient_resources_mgmt.strategy = globals()[str(table["type_of_data"]).capitalize()]
+    table['data_alive_time'] = None
+    patient_data_dict_origin = patient_resources_mgmt.get_data_with_resources(patient_id,
+                                                                              table,
+                                                                              default_time,
+                                                                              data_alive_time)
+    return patient_data_dict_origin
 
 
 def get_resource_datetime(data: Dict, default_time: datetime) -> str | None:

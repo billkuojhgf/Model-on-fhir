@@ -25,8 +25,7 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
         config["fhir_server"]["FHIR_SERVER_URL"] = r.fhirServer
     except Exception as e:
         print(e)
-    # for model_name in feature_table.get_exist_model_name():
-    for model_name in ['diabetes', 'nsti']:
+    for model_name in feature_table.get_exist_model_name():
         """
             1. 首先是要確認病患ID在資料庫中的資料集是否足夠，所以這時候會去試探Server看是否有數據
             2. 確認有資料後，就會將數據丟入Model中進行預測

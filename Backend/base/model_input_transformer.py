@@ -11,9 +11,13 @@ def get_model_input(value, transfer) -> int or float or str or bool:
     category = lambda val, transfer_list: getattr(operator, transfer_list['prefix'])(val, transfer_list['condition'])
     for transfer_dict in transfer['case']:
         for condition in transfer_dict['conditions']:
-            if not category(value, condition):
-                break
-            return transfer_dict['category']
+            try:
+                if not category(value, condition):
+                    break
+                return transfer_dict['category']
+            except TypeError:
+                # feature value is not able to execute the comparison.
+                return value
 
     raise ValueError('Value is not suitable in the configuration.')
 

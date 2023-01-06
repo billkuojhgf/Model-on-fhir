@@ -31,7 +31,7 @@ def callback():
         smart_serverObj.handle_callback(request.url)
     except Exception as e:
         return f"""<h1>Authorization Error</h1><p>{e}</p><p><a href="/">Start over</a></p>"""
-    return "Authenticated."
+    return redirect("http://localhost:8080")
 
 
 def check_auth():
@@ -39,4 +39,6 @@ def check_auth():
     try:
         return smart_serverObj.ready
     except AttributeError:
+        return False
+    except NameError:
         return False

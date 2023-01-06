@@ -25,6 +25,11 @@ def index():
            "href=\"/diabetes?id=test-03121002\">http://localhost:5000/diabetes?id=test-03121002</a> "
 
 
+@mocab_app.route('/exist_model')
+def exist_model():
+    return jsonify({"model": feature_table.get_exist_model_name()})
+
+
 @mocab_app.route('/<api>', methods=['GET'])
 def api_with_id(api):
     """
@@ -43,22 +48,29 @@ def api_with_id(api):
         }
     """
     # TODO: the hour_alive_time request value
-    if request.values.get('id') is None:
-        abort(400, description="Please fill in patient's ID.")
-
-    # if smart parameter sets to true, function redirects to api_with_id_and_smart
-    smart_enable = str2bool(request.values.get('smart'))
-
-    if smart_enable:
-        if not smart_on_fhir.check_auth():
-            abort(401, description="SMART Auth is not enabled. Launch MoCab SMART Endpoint in EHR First.")
-
     patient_id = request.values.get('id')
+    if patient_id is None:
+        abort(400, description="Please fill in patient's ID.")
     hour_alive_time = request.values.get('hour_alive_time')  # None if request has no hour_alive_time parameter
 
     patient_data_dict = ds.model_feature_search_with_patient_id(
-        patient_id, table.get_model_feature_dict(api), data_alive_time=hour_alive_time, smart_enable=smart_enable)
+        patient_id, table.get_model_feature_dict(api), data_alive_time=hour_alive_time)
     patient_data_dict["predict_value"] = return_model_result(patient_data_dict, api)
+    return jsonify(patient_data_dict)
+
+
+@mocab_app.route("/smart/<api>", methods=['GET'])
+def smart_api_with_id(api):
+    patient_id = request.values.get('id')
+    if patient_id is None:
+        abort(400, description="Please fill in patient's ID.")
+
+    if not smart_on_fhir.check_auth():
+        abort(401, description="SMART Auth is not enabled. Launch MoCab SMART Endpoint in EHR First.")
+
+    patient_data_dict = ds.smart_model_feature_search_with_patient_id(
+        patient_id, table.get_model_feature_dict(api))
+
     return jsonify(patient_data_dict)
 
 

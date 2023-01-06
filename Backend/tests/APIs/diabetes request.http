@@ -2,4 +2,4 @@
 GET http://localhost:5000/diabetes?id=test-03121002
 
 ### Request GET diabetes api with patient's id in SMART Search
-GET http://localhost:5000/diabetes?id=test-03121002&smart=true
+GET http://localhost:5000/smart/diabetes?id=test-03121002
