@@ -19,6 +19,7 @@
     "moment": "^2.29.4",
     "vue": "^3.2.13",
     "vue-chartjs": "^4.1.2",
+    "vue-error-boundary": "^2.0.1",
     "vue-router": "^4.1.6",
     "vuex": "^4.0.2"
   },

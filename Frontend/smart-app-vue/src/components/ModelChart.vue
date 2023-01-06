@@ -5,14 +5,14 @@
     class="lineChartSetsClass"
   >
     <LineChart
-        v-for="x in dataData.length"
-        :key="x"
-        :chart-label="dataLabel[x-1]"
-        :chart-point="dataData[x-1]"
-        :title="dataTitle[x-1]"
-        :model-name="title"
-        @takeChange="changedTake_Obj"
-    ></LineChart>
+          v-for="x in dataData.length"
+          :key="x"
+          :chart-label="dataLabel[x-1]"
+          :chart-point="dataData[x-1]"
+          :title="dataTitle[x-1]"
+          :model-name="title"
+          @takeChange="changedTake_Obj"
+      ></LineChart>
   </div>
 </template>
 
@@ -22,7 +22,7 @@ import LineChart from "@/components/LineChart";
 export default {
   name: "ModelChart",
   components: {
-    LineChart
+    LineChart,
   },
   props: {
     title: String,

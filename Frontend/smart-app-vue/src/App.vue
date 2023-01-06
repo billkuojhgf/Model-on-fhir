@@ -60,8 +60,8 @@
 
 <script>
 import ModelChart from "@/components/ModelChart";
-import {featureTable} from "@/baseModel/feature";
 import {getData} from "@/baseModel/patientDataSearch";
+import axios from "axios";
 
 export default {
   name: 'App',
@@ -112,20 +112,27 @@ export default {
     let modelFeatureArray = [] // Stores all feature
     let featureCollectObject
 
-    // console.log(featureTable)
-    for (const [key, value] of Object.entries(featureTable)) {
+    let model_list = await axios({
+      method: 'get',
+      baseURL: this.$store.state.base,
+      url: `/exist_model`,
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    })
+        .then((result) => {
+          return result.data['model']
+        })
+        .catch(error => console.log(error))
+
+    for (const available_model of model_list) {
       featureCollectObject = {}
-      featureCollectObject.name = key
-      featureCollectObject.resources = await getData('test-03121002', value)
+      featureCollectObject.name = available_model
+      featureCollectObject.resources = await getData('test-03121002', available_model)
       featureCollectObject.score = null
       modelFeatureArray.push(featureCollectObject)
     }
     console.log(modelFeatureArray)
-
     this.$store.commit('updateFeatureArray', modelFeatureArray)
-
-    // TODO: 接下來，打API來取得各個Model的結果
-    // 這邊可以用actions來做，畢竟之後的很多事情都會透過actions來執行
   },
 }
 </script>

@@ -68,6 +68,7 @@ export default {
         ]
       },
       chartOptions: {
+        spanGaps: true,
         aspectRatio: 1.25,
         responsive: true,
         animation: false,
@@ -88,7 +89,12 @@ export default {
           bodyAlign: 'center'
         },
         onClick: (e) => {
-          this.take = e.chart.tooltip.dataPoints[0].raw
+          try{
+            this.take = e.chart.tooltip.dataPoints[0].raw
+          }
+          catch (e){
+            this.take += 0
+          }
         },
         scales: {
           x: {

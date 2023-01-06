@@ -3,8 +3,6 @@ import axios from "axios";
 
 const nowDate = new Date()
 
-const base = 'http://localhost:5000'
-
 export const store = createStore({
     state () {
         return {
@@ -13,6 +11,7 @@ export const store = createStore({
             dateChanged: false,
             minDate: nowDate.setFullYear(nowDate.getFullYear() - 7),
             maxDate: new Date(),
+            base: 'http://localhost:5000',
         }
     },
     mutations: {
@@ -56,7 +55,7 @@ export const store = createStore({
             })
             axios({
                 method: 'post',
-                baseURL: base,
+                baseURL: this.state.base,
                 url: `/${modelFeatureObj.name}/change`,
                 data: featureObj,
                 'Content-Type': 'application/json',
