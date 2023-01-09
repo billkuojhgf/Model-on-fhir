@@ -36,6 +36,4 @@ if __name__ == '__main__':
     mask()
     init_models()
     CORS(mocab_app)
-    mocab_app.debug = True
-    mocab_app.port = 5000
-    mocab_app.run()
+    mocab_app.run(port=5050, debug=True)
