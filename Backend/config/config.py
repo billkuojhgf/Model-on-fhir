@@ -14,7 +14,8 @@ _config = {
     },
     "frontend": {
         "FRONTEND_URL": "http://localhost:8080"
-    }
+    },
+    "patient_id": "test-03121002",
 }
 
 configObject = _config

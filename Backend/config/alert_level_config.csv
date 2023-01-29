@@ -1,4 +1,0 @@
-model,condition,info_range,warning_range,critical_range
-diabetes,gender=male&age>=20,
-qcsi,encounter_type=EMER,
-nsti,encounter_type=EMER,

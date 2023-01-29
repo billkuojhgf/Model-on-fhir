@@ -1,0 +1,4 @@
+model,condition,info_range,warning_range,critical_range,smart_app_url
+diabetes,gender=male&age=ge|20,lt|0.3,ge|0.3&lt|0.7,gt|0.7,
+qcsi,encounter_type=EMER,le|4,gt|4&le|8,gt|8,
+nsti,encounter_type=EMER,lt|0.3,ge|0.3&lt|0.7,gt|0.7,

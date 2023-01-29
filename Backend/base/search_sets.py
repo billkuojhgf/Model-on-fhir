@@ -7,13 +7,13 @@ from typing import Dict
 from config import configObject as config
 import smart_on_fhir
 from dateutil.relativedelta import relativedelta
-from fhirpy import SyncFHIRClient
+from base.fhir_search_obj import fhir_class_obj
 from fhirpy.base.exceptions import ResourceNotFound
 from fhirpy.base.searchset import FHIR_DATE_FORMAT
 from fhirpy.base.searchset import datetime
 from fhirpy.lib import SyncFHIRResource
 
-CLIENT: SyncFHIRClient
+CLIENT: SyncFHIRResource
 
 
 # FHIR_DATE_FORMAT='%Y-%m-%d'
@@ -169,8 +169,11 @@ class ResourceMgmt:
 
         print("Getting patient's data with {} resources".format(self._strategy.__name__))
         global CLIENT
-        # CLIENT = SyncFHIRClient(config['fhir_server']['FHIR_SERVER_URL'])
-        resource_list = self._strategy.search(self, patient_id, table, default_time, data_alive_time)
+        CLIENT = fhir_class_obj.client()
+        try:
+            resource_list = self._strategy.search(self, patient_id, table, default_time, data_alive_time)
+        except Exception as e:
+            raise Exception(e)
         return resource_list
 
     def get_datetime_with_resources(self, data_dictionary: Dict, default_time: datetime):
@@ -251,7 +254,11 @@ def _return_date_time_formatter(datetime_string: str) -> str or None:
 
 
 class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
-    def search(self, patient_id: str, table: dict, default_time: datetime, data_alive_time=None) -> Dict:
+    def search(self,
+               patient_id: str,
+               table: dict,
+               default_time: datetime = datetime.datetime.now(),
+               data_alive_time=None) -> Dict:
         default_value = table['default_value']
 
         params = {
@@ -308,7 +315,8 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
         return {'resource': results, 'component_code': params['code'] if is_in_component else None,
                 'type': 'Observation'}
 
-    def get_datetime(self, dictionary: dict, default_time) -> str | None:
+    def get_datetime(self, dictionary: dict,
+                     default_time: datetime = datetime.datetime.now()) -> str | None:
         try:
             return _return_date_time_formatter(dictionary['resource'].effectiveDateTime)
         except (AttributeError, KeyError):
@@ -335,7 +343,11 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
 
 
 class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
-    def search(self, patient_id: str, table: dict, default_time: datetime, data_alive_time=None) -> Dict:
+    def search(self,
+               patient_id: str,
+               table: dict,
+               default_time: datetime = datetime.datetime.now(),
+               data_alive_time=None) -> Dict:
         params = {
             'subject': patient_id,
             'code': table['code']
@@ -354,7 +366,7 @@ class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
         return {'resource': None if len(results) == 0 else results, 'component_code': None,
                 'type': 'Condition'}
 
-    def get_datetime(self, dictionary: dict, default_time) -> str | None:
+    def get_datetime(self, dictionary: dict, default_time: datetime = datetime.datetime.now()) -> str | None:
         try:
             return _return_date_time_formatter(dictionary['resource'].recordedDate)
         except AttributeError:
@@ -365,7 +377,11 @@ class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
 
 
 class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
-    def search(self, patient_id: str, table: dict, default_time: datetime, data_alive_time=None) -> Dict:
+    def search(self,
+               patient_id: str,
+               table: dict,
+               default_time: datetime = datetime.datetime.now(),
+               data_alive_time=None) -> Dict:
         resources = CLIENT.resources('Patient')
         search = resources.search(_id=patient_id).limit(1)
         patient = search.get()
@@ -378,7 +394,7 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
         }
 
     @staticmethod
-    def get_age(patient: SyncFHIRResource, default_time) -> int:
+    def get_age(patient: SyncFHIRResource, default_time: datetime = datetime.datetime.now()) -> int:
         patient_birthdate = datetime.datetime.strptime(
             patient.birthDate, FHIR_DATE_FORMAT)
         # If we need to calculate the real age that is 1 year before or so (depends on the default_time)
@@ -386,7 +402,7 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
         age = default_time - patient_birthdate
         return int(age.days / 365)
 
-    def get_datetime(self, dictionary: dict, default_time) -> str:
+    def get_datetime(self, dictionary: dict, default_time=datetime.datetime.now()) -> str:
         """
         直接Return datetime format就好
         @param dictionary:
@@ -407,7 +423,7 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
 
 def get_patient_resources(patient_id,
                           table,
-                          default_time: datetime,
+                          default_time: datetime = datetime.datetime.now(),
                           data_alive_time=None) -> dict or (dict, dict):
     """
     The function gets the patient's resources from the database and return
@@ -433,18 +449,6 @@ def get_patient_resources(patient_id,
     Observation因為會有component-code的可能，所以相關程式碼會比較複雜
     Condition目前相對單純，就是使用時間大於等於條件與code等於多少就好了
     """
-
-    # TODO: Replace CLIENT object in clever way
-    global CLIENT
-    if not smart_on_fhir.check_auth():
-        CLIENT = SyncFHIRClient(
-            url=config['fhir_server']['FHIR_SERVER_URL']
-        )
-    else:
-        CLIENT = SyncFHIRClient(
-            url=smart_on_fhir.smart_serverObj.base_uri,
-            authorization=f'Bearer {smart_on_fhir.smart_serverObj.auth.access_token}'
-        )
 
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(table["type_of_data"]).capitalize()]
@@ -508,13 +512,6 @@ def get_patient_resources_data_set(patient_id,
     Observation因為會有component-code的可能，所以相關程式碼會比較複雜
     Condition目前相對單純，就是使用時間大於等於條件與code等於多少就好了
     """
-
-    # TODO: Replace CLIENT object in clever way
-    global CLIENT
-    CLIENT = SyncFHIRClient(
-        url=smart_on_fhir.smart_serverObj.base_uri,
-        authorization=f'Bearer {smart_on_fhir.smart_serverObj.auth.access_token}'
-    )
 
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(table["type_of_data"]).capitalize()]

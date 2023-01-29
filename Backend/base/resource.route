@@ -1,0 +1,4 @@
+# {condition_type}={resource_type}.{*methods}
+encounter_type=Encounter.class.code
+gender=Patient.gender
+age=Patient.get_age()

@@ -43,7 +43,7 @@ class _ModelFeature:
         # two types of formulate, "regex with prefix" or "regex without prefix".
         regex_with_prefix = re.compile(r"(.*?) ?= ?(([a-zA-Z]{2})\|(.*))")
         regex_without_prefix = re.compile(r"(.*?) ?= ?(.*)")
-        regex_take_value_prefix = re.compile(r"(\w{2})\|(\d*)")
+        regex_take_value_prefix = re.compile(r"(\w{2})\|(-?\d+\.?\d*)")
         table = {}
 
         with open(model_feature_table_position, newline='') as model_feature_table:
@@ -87,6 +87,7 @@ class _ModelFeature:
                         for i in result_regex_with_prefix.group(2).split("&"):
                             if regex_take_value_prefix.search(fr"{i}").group(1) not in prefix_list:
                                 raise AttributeError(f"{row['formulate']} has invalid prefix.")
+
                             temp_dict = {'prefix': regex_take_value_prefix.search(fr"{i}").group(1),
                                          'condition': transform_to_correct_type(
                                                 regex_take_value_prefix.search(fr"{i}").group(2)

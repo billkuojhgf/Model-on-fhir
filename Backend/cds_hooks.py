@@ -1,26 +1,60 @@
 import os
 import base.cds_hooks_work as cds
-from dotenv import load_dotenv
 from app import return_model_result
 from config import configObject as config
+from base.cds_hooks_validator import model_evaluating
+from base.cds_hooks_validator import Card
+from base.cds_hooks_validator import card_determine
 from base.patient_data_search import model_feature_search_with_patient_id
 from base.feature_table import feature_table
+from dotenv import load_dotenv
 from fhirpy.base.exceptions import ResourceNotFound
+from base.fhir_search_obj import fhir_class_obj
 from mocab_models import *
 
 load_dotenv()
 cds_app = cds.App()
 
 
+def model_evaluation(patient_id, encounter_id) -> list:
+    """
+    Evaluate which models should be automatically calculated in this round.
+    :param patient_id:
+    :param encounter_id:
+    :return:
+    """
+    fhir_client = fhir_class_obj.client()
+    encounter_resource = None
+    model_list = []
+
+    # TODO: 之後改掉，取得Resources 的動作統一在search_sets 中執行
+    patient_resource = fhir_client.resources("Patient").search(_id=patient_id).limit(1).get()
+    if encounter_id != "":
+        encounter_resource = fhir_client.resources("Encounter").search(_id=encounter_id).limit(1).get()
+
+    for model_name in feature_table.get_exist_model_name():
+        if model_evaluating(model_name,
+                            patient_resource=patient_resource,
+                            encounter_resource=encounter_resource):
+            model_list.append(model_name)
+
+    return model_list
+
+
 @cds_app.patient_view("MoCab-CDS-Service", "The patient greeting service greets a patient!", title="Patient Greeter")
 def greeting(r: cds.PatientViewRequest, response: cds.Response):
-    # TODO: authorize whether the server's url is real or not
+    config['patient_id'] = r.context.patientId
+
     try:
-        config["fhir_server"]["FHIR_SERVER_URL"] = r.fhirServer
+        fhir_class_obj.update_client(url=r.fhirServer,
+                                     authorization=f"{r.fhirAuthorization.token_type} {r.fhirAuthorization.access_token}")
     except Exception as e:
-        print(e)
+        raise Exception(e)
     # Add some if-else statement of models' using situation.
-    for model_name in feature_table.get_exist_model_name():
+    calculated_list = model_evaluation(r.context.patientId, r.context.encounterId)
+
+    # iterate all require models
+    for model_name in calculated_list:
         """
             1. 首先是要確認病患ID在資料庫中的資料集是否足夠，所以這時候會去試探Server看是否有數據
             2. 確認有資料後，就會將數據丟入Model中進行預測
@@ -32,6 +66,7 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
                                                                            feature_table.get_model_feature_dict(
                                                                                model_name))
         except (ResourceNotFound, KeyError) as e:
+            # TODO: What to do if resources are not found in the server?
             continue
 
         try:
@@ -39,41 +74,36 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
         except KeyError as e:
             continue
 
-        # TODO: 應該要有個表來表示正常數值的Range.
-        if patient_data_dictionary['predict_value'] > 3:
-            card = cds.Card.critical(f"Patient {r.context.patientId} has a high risk of \"{model_name}\".\n",
-                                     cds.Source(label="MoCab CDS Service",
-                                                url="https://www.mo-cab.dev",
-                                                icon="https://i.imgur.com/sFUFOyO.png"),
-                                     suggestions=[cds.Suggestion(label="Suggestions", isRecommended=True)],
-                                     detail=f"On a high risk {model_name}, Model Score: {patient_data_dictionary['predict_value']}\nMore detail...")
-            card.add_link(cds.Link.smart("MoCab-App",
-                                         "http://localhost:5000/launch"))
-        elif patient_data_dictionary['predict_value'] > 0.8:
-            card = cds.Card.warning(f"Patient {r.context.patientId} has a warning of \"{model_name}\".\n",
-                                    cds.Source(label="MoCab CDS Service",
-                                               url="https://www.mo-cab.dev",
-                                               icon="https://i.imgur.com/sFUFOyO.png"),
-                                    suggestions=[cds.Suggestion(label="Suggestions")],
-                                    detail=f"On a warning of {model_name}, Model Score: {patient_data_dictionary['predict_value']}\nMore detail...")
-            card.add_link(cds.Link.smart("MoCab-App",
-                                         "http://localhost:5000/launch"))
-        else:
-            card = cds.Card.info(f"Patient {r.context.patientId} looks fine on \"{model_name}\".\n",
-                                 cds.Source(label="MoCab CDS Service",
-                                            url="https://www.mo-cab.dev",
-                                            icon="https://i.imgur.com/sFUFOyO.png"),
-                                 suggestions=[cds.Suggestion(label="Suggestions")],
-                                 detail=f"Looks fine on {model_name}, Model Score: {patient_data_dictionary['predict_value']}\nMore detail...")
-
-            card.add_link(cds.Link.smart("MoCab-App",
-                                         "http://localhost:5000/launch"))
+        card = generate_cds_card(r.context.patientId, patient_data_dictionary, model_name)
         response.add_card(card)
     response.httpStatusCode = 200
 
 
-def generate_cds_card() -> cds.Card:  # Model generate card.
-    pass
+def generate_cds_card(patient_id, patient_data_dictionary, model_name) -> cds.Card:  # Model generate card.
+    card_used = card_determine(patient_data_dictionary, model_name)
+    source = cds.Source(label="MoCab CDS Service",
+                        url="https://www.mo-cab.dev",
+                        icon="https://i.imgur.com/sFUFOyO.png")
+    suggestions = [cds.Suggestion(label="Suggestions", isRecommended=True)]
+    if card_used is Card.CRITICAL:
+        summary = f"Patient {patient_id} has a high risk of \"{model_name}\".\n"
+        detail = f"""Capture a high risk {model_name}, Model Score: {patient_data_dictionary['predict_value']}
+        More detail..."""
+    elif card_used is Card.WARNING:
+        summary = f"Patient {patient_id} has a warning of \"{model_name}\".\n"
+        detail = f"""On a warning of {model_name}, Model Score: {patient_data_dictionary['predict_value']}
+        More detail..."""
+    elif card_used is Card.INFO:
+        summary = f"Patient {patient_id} looks fine on \"{model_name}\".\n"
+        detail = f"""Looks fine on {model_name}, Model Score: {patient_data_dictionary['predict_value']}
+        More detail..."""
+    else:
+        raise Exception(f"No such card: {card_used}.")
+
+    card = getattr(cds.Card, card_used.value)(summary, source, suggestions=suggestions, detail=detail)
+    card.add_link(cds.Link.smart("MoCab-App",
+                                 "http://localhost:5000/launch"))
+    return card
 
 
 if __name__ == '__main__':
