@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
     features__table = feature_table
     patient__id = "test-03121002"
-    feature__table = features__table.get_model_feature_dict('diabetes')
+    feature__table = features__table.get_model_feature_dict('pima_diabetes')
     default_time = datetime.datetime.now()
 
     print(model_feature_search_with_patient_id(patient__id, feature__table, default_time))

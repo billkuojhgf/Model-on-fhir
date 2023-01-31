@@ -1,6 +1,6 @@
-from mocab_models.qcsi.mask_module import ConcreteMaskMart
-from mocab_models.qcsi.mask_module import ConcreteMaskType
-from mocab_models.qcsi.mask_module import ConcreteRegexSearch
+from mocab_models.qCSI.mask_module import ConcreteMaskMart
+from mocab_models.qCSI.mask_module import ConcreteMaskType
+from mocab_models.qCSI.mask_module import ConcreteRegexSearch
 import pandas as pd
 
 unit_type = ("o2_flow_rate", "fio2")

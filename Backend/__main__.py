@@ -1,6 +1,6 @@
 import os
 
-from mocab_models.qcsi.mask import mask
+from mocab_models.qCSI.mask import mask
 from app import mocab_app
 from flask_cors import CORS
 from cds_hooks import cds_app

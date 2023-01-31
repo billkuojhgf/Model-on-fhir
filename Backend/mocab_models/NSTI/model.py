@@ -1,7 +1,7 @@
 import joblib
 
 
-def predict(data: dict):
+def predict(data: list):
     """
 
     :param data:
@@ -16,28 +16,12 @@ def predict(data: dict):
     x = list()
     temp = data
     # Fixme: 路徑問題，待解決
-    loaded_model = joblib.load("./mocab_models/nsti/LR_model_NSTI_5fea")
+    loaded_model = joblib.load("./mocab_models/NSTI/LR_model_NSTI_5fea")
     x.append(temp)
     result = loaded_model.predict_proba(x)
     return result[:, 1][0]
 
 
 if __name__ == "__main__":
-    patient_data = {
-        "sea": {
-            "value": 1
-        },
-        "wbc": {
-            "value": 12900
-        },
-        "crp": {
-            "value": 162.2
-        },
-        "seg": {
-            "value": 86.6
-        },
-        "band": {
-            "value": 0
-        }
-    }
+    patient_data = [1, 12900, 162.2, 86.6, 0]
     print(predict(patient_data))

@@ -215,7 +215,7 @@ if __name__ == "__main__":
     import json
 
     cds_hooks_config_table = _HooksFeature("../config/cds_hooks_config.csv")
-    print(json.dumps(cds_hooks_config_table.get_cds_hooks_table_dict("diabetes"), indent=2))
+    print(json.dumps(cds_hooks_config_table.get_cds_hooks_table_dict("pima_diabetes"), indent=2))
 
     route_table = _FhirResourceRoute("./resource.route")
     print(json.dumps(route_table.get_route_dict("age"), indent=2))

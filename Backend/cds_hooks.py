@@ -30,7 +30,10 @@ def model_evaluation(patient_id, encounter_id) -> list:
     # TODO: 之後改掉，取得Resources 的動作統一在search_sets 中執行
     patient_resource = fhir_client.resources("Patient").search(_id=patient_id).limit(1).get()
     if encounter_id != "":
-        encounter_resource = fhir_client.resources("Encounter").search(_id=encounter_id).limit(1).get()
+        try:
+            encounter_resource = fhir_client.resources("Encounter").search(_id=encounter_id).limit(1).get()
+        except ResourceNotFound:
+            print("No resource found")
 
     for model_name in feature_table.get_exist_model_name():
         if model_evaluating(model_name,
@@ -45,11 +48,13 @@ def model_evaluation(patient_id, encounter_id) -> list:
 def greeting(r: cds.PatientViewRequest, response: cds.Response):
     config['patient_id'] = r.context.patientId
 
+    """    
     try:
         fhir_class_obj.update_client(url=r.fhirServer,
                                      authorization=f"{r.fhirAuthorization.token_type} {r.fhirAuthorization.access_token}")
     except Exception as e:
         raise Exception(e)
+    """
     # Add some if-else statement of models' using situation.
     calculated_list = model_evaluation(r.context.patientId, r.context.encounterId)
 
@@ -67,11 +72,16 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
                                                                                model_name))
         except (ResourceNotFound, KeyError) as e:
             # TODO: What to do if resources are not found in the server?
+            print(e)
             continue
 
         try:
             patient_data_dictionary["predict_value"] = return_model_result(patient_data_dictionary, model_name)
         except KeyError as e:
+            print(e)
+            continue
+        except Exception as e:
+            print(e)
             continue
 
         card = generate_cds_card(r.context.patientId, patient_data_dictionary, model_name)
@@ -81,24 +91,25 @@ def greeting(r: cds.PatientViewRequest, response: cds.Response):
 
 def generate_cds_card(patient_id, patient_data_dictionary, model_name) -> cds.Card:  # Model generate card.
     card_used = card_determine(patient_data_dictionary, model_name)
+
+    model_name = "".join([i if i.isalnum() else " " for i in model_name])
     source = cds.Source(label="MoCab CDS Service",
                         url="https://www.mo-cab.dev",
                         icon="https://i.imgur.com/sFUFOyO.png")
     suggestions = [cds.Suggestion(label="Suggestions", isRecommended=True)]
     if card_used is Card.CRITICAL:
         summary = f"Patient {patient_id} has a high risk of \"{model_name}\".\n"
-        detail = f"""Capture a high risk {model_name}, Model Score: {patient_data_dictionary['predict_value']}
-        More detail..."""
+        detail = f"{model_name} model captures a high risk. "
     elif card_used is Card.WARNING:
         summary = f"Patient {patient_id} has a warning of \"{model_name}\".\n"
-        detail = f"""On a warning of {model_name}, Model Score: {patient_data_dictionary['predict_value']}
-        More detail..."""
+        detail = f"{model_name} model captures a warning. "
     elif card_used is Card.INFO:
         summary = f"Patient {patient_id} looks fine on \"{model_name}\".\n"
-        detail = f"""Looks fine on {model_name}, Model Score: {patient_data_dictionary['predict_value']}
-        More detail..."""
+        detail = f"Looks fine on {model_name}. "
     else:
         raise Exception(f"No such card: {card_used}.")
+    detail += f"""Model Score: {round(patient_data_dictionary['predict_value'], 2)}  
+    More detail..."""
 
     card = getattr(cds.Card, card_used.value)(summary, source, suggestions=suggestions, detail=detail)
     card.add_link(cds.Link.smart("MoCab-App",

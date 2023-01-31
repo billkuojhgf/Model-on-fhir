@@ -22,7 +22,7 @@ table = feature_table
 @mocab_app.route('/', methods=['GET'])
 def index():
     return "Hello, World!<br/><br/>請在網址列的/後面輸入你要搜尋的病患id即可得出結果<br/>Example: <a " \
-           "href=\"/diabetes?id=test-03121002\">http://localhost:5000/diabetes?id=test-03121002</a> "
+           "href=\"/pima_diabetes?id=test-03121002\">http://localhost:5000/diabetes?id=test-03121002</a> "
 
 
 @mocab_app.route('/exist_model')

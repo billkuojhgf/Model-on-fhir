@@ -1,7 +1,7 @@
-from mocab_models.qcsi import mask
+from mocab_models.qCSI import mask
 from typing import Dict
-from mocab_models.qcsi.mask import unit_type
-from mocab_models.qcsi.mask import mask_type
+from mocab_models.qCSI.mask import unit_type
+from mocab_models.qCSI.mask import mask_type
 
 
 def predict(data: list) -> int:
