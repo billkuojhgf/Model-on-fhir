@@ -53,7 +53,6 @@ class _FeatureTable:
             return table
 
     def get_model_feature_dict(self, model_name):
-        # TODO: table_obj = DefaultMunch.fromDict(table.table), change table into table object
         if model_name not in self.table:
             raise KeyError("Model is not exist in the feature table.")
 

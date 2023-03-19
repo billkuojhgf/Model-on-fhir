@@ -22,7 +22,7 @@ test_list = [({
                       "date": "2016-12-24T00:00:00",
                       "value": 0
                   }
-              }, 'nsti', [1, 4400, 0.5, 50.7, 0]), ({
+              }, 'NSTI', [1, 4400, 0.5, 50.7, 0]), ({
                     "respiratory_rate": {
                         "date": "2022-01-19T11:53",
                         "value": 25
@@ -36,7 +36,7 @@ test_list = [({
                         "date": "2022-01-19T11:53",
                         "value": 90
                     }
-                }, "qcsi", [1, 2, 4]), (
+                }, "qCSI", [1, 2, 4]), (
                     {
                       "age": {
                         "date": "2022-11-27",
@@ -79,7 +79,7 @@ test_list = [({
                         "date": "2018-03-22T00:00",
                         "value": 69
                       }
-                    }, 'diabetes', [6, 153, 70, 35, 0.6, 22.275309917355372, 0.627, 25])]
+                    }, 'pima_diabetes', [6, 153, 70, 35, 0.6, 22.275309917355372, 0.627, 25])]
 
 
 @pytest.mark.parametrize("test_input, test_model, expected", test_list)

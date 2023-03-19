@@ -11,7 +11,7 @@ def predict(data: list):
     # controlled variable: glucose, diastolic blood pressure, insulin, height, weight, age
 
     temp = data
-    loaded_model = joblib.load("./mocab_models/diabetes/finalized_model.sav")
+    loaded_model = joblib.load("./mocab_models/pima_diabetes/finalized_model.sav")
     x.append(temp)
     result = loaded_model.predict_proba(x)
     # result = [no's probability, yes's probability]

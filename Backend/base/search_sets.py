@@ -553,7 +553,7 @@ if __name__ == "__main__":
 
     features__table = feature_table
     patient__id = "test-03121002"
-    feature__table = features__table.get_model_feature_dict('nsti')
+    feature__table = features__table.get_model_feature_dict('NSTI')
     default_time = datetime.datetime.now()
 
     patient_result_dict = dict()

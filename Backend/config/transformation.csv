@@ -9,6 +9,7 @@ CHARM,wide RAW,category,1=gt|14.5,4
 CHARM,wide RAW,category,0=le|14.5,4
 CHARM,history of Malignancy,category,1=true,5
 CHARM,history of Malignancy,category,0=false,5
+<<<<<<< HEAD
 nsti,sea,category,1=true,1
 nsti,sea,category,0=false,1
 nsti,seg,numeric,,4
@@ -41,3 +42,30 @@ test,smok,category,1=[smok1]eq|N&[smok2]eq|Y&[smok3]eq|N,
 test,smok,category,2=[smok1]eq|N&[smok2]eq|Y&[smok3]eq|N,
 test,smok,category,9=[smok1]eq|N,
 test,smok,category,9=[smok2]eq|Y,
+=======
+NSTI,sea,category,1=true,1
+NSTI,sea,category,0=false,1
+NSTI,seg,numeric,,4
+NSTI,band,numeric,,5
+NSTI,wbc,numeric,,2
+NSTI,crp,numeric,,3
+qCSI,respiratory_rate,category,0=le|22,1
+qCSI,respiratory_rate,category,1=gt|22&le|28,1
+qCSI,respiratory_rate,category,2=gt|28,1
+qCSI,spo2,category,0=gt|92,2
+qCSI,spo2,category,2=le|92&ge|89,2
+qCSI,spo2,category,5=lt|88,2
+qCSI,o2_flow_rate,category,0=le|2,3
+qCSI,o2_flow_rate,category,4=gt|2&le|4,3
+qCSI,o2_flow_rate,category,5=gt|4&le|6,3
+pima_diabetes,glucose,numeric,,2
+pima_diabetes,diastolic_blood_pressure,numeric,,3
+pima_diabetes,insulin,numeric,,5
+pima_diabetes,height,numeric,,
+pima_diabetes,weight,numeric,,
+pima_diabetes,bmi,formula,[weight]/([height]/100)/([height]/100),6
+pima_diabetes,pregnancies,numeric,,1
+pima_diabetes,skinthickness,numeric,,4
+pima_diabetes,diabetespedigreefunction,numeric,,7
+pima_diabetes,age,numeric,,8
+>>>>>>> 1c9ac173ef04060ae1ba6de0dfaebd97153a4bef

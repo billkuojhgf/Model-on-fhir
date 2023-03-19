@@ -88,5 +88,6 @@ def card_determine(patient_data_dictionary, model_name) -> Card or None:
     cds_hooks_config = cds_hooks_config_table.get_cds_hooks_table_dict(model_name)
     for card in [card_type.value for card_type in Card]:
         if match_conditions(patient_data_dictionary['predict_value'], cds_hooks_config[f'{card}_range']):
-            return getattr(Card, card)
+            print(f"Card Type: {card}")
+            return getattr(Card, card.upper())
     return None
