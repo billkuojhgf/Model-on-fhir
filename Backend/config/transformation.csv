@@ -37,10 +37,10 @@ pima_diabetes,pregnancies,numeric,,1
 pima_diabetes,skinthickness,numeric,,4
 pima_diabetes,diabetespedigreefunction,numeric,,7
 pima_diabetes,age,numeric,,8
-,smok_1,numeric,,
-,smok_2,numeric,,
-,smok_3,numeric,,
-,CIG,category,n/a=[smok_1]eq|n/a&[smok_2]eq|n/a&[smok_3]eq|n/a,9
-,CIG,category,9=[smok_1]eq|9&[smok_2]eq|9&[smok_3]eq|9,9
-,CIG,category,N=[smok_1]eq|0&[smok_2]eq|0&[smok_3]eq|88,9
-,CIG,category,Y(default),9
+test,smok1,numeric,,
+test,smok2,numeric,,
+test,smok3,numeric,,
+test,smok,category,1=[smok1]eq|N&[smok2]eq|Y&[smok3]eq|N,
+test,smok,category,2=[smok1]eq|N&[smok2]eq|Y&[smok3]eq|N,
+test,smok,category,9=[smok1]eq|N,
+test,smok,category,9=[smok2]eq|Y,
