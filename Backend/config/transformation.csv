@@ -34,3 +34,10 @@ diabetes,pregnancies,numeric,,1
 diabetes,skinthickness,numeric,,4
 diabetes,diabetespedigreefunction,numeric,,7
 diabetes,age,numeric,,8
+test,smok1,numeric,,
+test,smok2,numeric,,
+test,smok3,numeric,,
+test,smok,category,1=[smok1]eq|N&[smok2]eq|Y&[smok3]eq|N,
+test,smok,category,2=[smok1]eq|N&[smok2]eq|Y&[smok3]eq|N,
+test,smok,category,9=[smok1]eq|N,
+test,smok,category,9=[smok2]eq|Y,
