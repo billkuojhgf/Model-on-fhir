@@ -30,6 +30,7 @@ def explore_files(url, path):
         create_resource(url, path)
     pass
 
+
 def create_resource(
         url,
         path
@@ -64,6 +65,7 @@ def create_resource(
         except Exception as e:
             print(e, id)
             continue
+
 
 if __name__ == "__main__":
     url = input("請輸入FHIR Server base URL: ")
