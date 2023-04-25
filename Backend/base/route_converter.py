@@ -2,10 +2,6 @@ import reprlib
 import re
 import json
 
-from fhirpy import SyncFHIRClient
-
-client = SyncFHIRClient('http://ming-desktop.ddns.net:8192/fhir')
-
 
 def get_by_path(data, path, default=None):
     assert isinstance(path, list), "Path must be a list"
@@ -29,7 +25,7 @@ def get_by_path(data, path, default=None):
                                 check = False if get_by_path(item.get(k, None), v) is None else True
                             elif isinstance(v, dict):
                                 check = False if get_by_path(item.get(k, None), [v]) is None else True
-                            elif item.get(k, None) != v:
+                            elif str(item.get(k, None)) != v:
                                 check = False
 
                             if not check:

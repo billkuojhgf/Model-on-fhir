@@ -1,8 +1,5 @@
 import datetime
-
-from base.search_sets import get_patient_resources
 from base.search_sets import get_patient_resources_data_set
-from base.search_sets import get_resource_datetime_and_value
 
 
 def model_feature_search_with_patient_id(patient_id: str,

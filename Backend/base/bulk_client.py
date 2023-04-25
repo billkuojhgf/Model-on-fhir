@@ -76,7 +76,7 @@ class BulkDataClient(object):
             try:
                 response = self._issue(content)
             except requests.exceptions.ReadTimeout as e:
-                if retry_time > 10:
+                if retry_time > 15:
                     print("Retry times exceeded 10, aborting...")
                     raise e
 
@@ -86,6 +86,11 @@ class BulkDataClient(object):
 
             if response.status_code == 200:
                 self.manifest = MANIFEST_URLS.search(response.json())
+                try:
+                    with open('manifest.json', 'w+') as f:
+                        json.dump(self.manifest, f)
+                except Exception as e:
+                    print(e)
                 return
 
     def iter_ndjson_dict(self) -> {str: list} or None:
@@ -107,9 +112,8 @@ class BulkDataClient(object):
 
 
 if __name__ == "__main__":
-    print("test")
+    print("starting...")
     bulk_server = BulkDataClient()
     bulk_server.provision()
     ndj = bulk_server.iter_ndjson_dict()
-    print("test")
     pass

@@ -1,12 +1,12 @@
 import csv
 import re
-from base.model_feature_table import transform_to_correct_type
+from base.transformation_table import transform_to_correct_type
 
 from base.exceptions import FeatureCodeIsEmpty
 
 
 class _FeatureTable:
-    def __init__(self, feature_table_position):
+    def __init__(self, feature_table_position="./config/features.csv"):
         self.table = self.__create_table(feature_table_position)
 
     @classmethod
@@ -106,8 +106,6 @@ class DataAliveTime:
     def get_seconds(self):
         return self._seconds
 
-
-feature_table = _FeatureTable("./config/features.csv")
 
 if __name__ == '__main__':
     from exceptions import FeatureCodeIsEmpty

@@ -1,6 +1,6 @@
 import os
 
-from mocab_models.qCSI.mask import mask
+from mocab_models.qCSI.mask import mask  # TODO: 之後要改成從mocab_models中import
 from app import mocab_app
 from flask_cors import CORS
 from cds_hooks import cds_app

@@ -2,9 +2,7 @@ import re
 import operator
 from pwn import safeeval
 from typing import Callable
-
-
-from base.model_feature_table import feature_table
+from base.object_store import model_feature_table
 
 
 def get_model_input(value: int or float or str or bool, transfer: dict) -> int or float or str or bool:
@@ -86,7 +84,7 @@ def transformer(patient_data_dict: dict, model: str) -> list:
     :param model: name of model
     :return: list that are ready for prediction. Sort features by index.
     """
-    transform_style = feature_table.get_model_feature_dict(model_name=model)
+    transform_style = model_feature_table.get_model_feature_dict(model_name=model)
     # First, transfer patient numeric data to model require format
     # getattr(operator, 'eq')(2, 3)
     model_data_dict = dict()

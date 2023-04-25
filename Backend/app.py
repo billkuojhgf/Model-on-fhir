@@ -10,7 +10,7 @@ mocab_app = Flask(__name__)
 CORS(mocab_app)
 
 from base import patient_data_search as ds
-from base.feature_table import feature_table
+from base.object_store import feature_table
 from base.model_input_transformer import transformer
 from mocab_models import *
 import smart_on_fhir

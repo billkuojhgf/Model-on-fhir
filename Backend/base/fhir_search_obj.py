@@ -34,4 +34,4 @@ class _FhirClassObject:
             return self._default_client
 
 
-fhir_class_obj = _FhirClassObject()
+# fhir_class_obj = FhirClassObject()

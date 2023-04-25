@@ -48,7 +48,7 @@ class Test(TestCase):
         self.assertEqual(parse_route('"component"."coding".{"code": "4323-3"}."display"'),
                          ['component', 'coding', {'code': '4323-3'}, 'display'])
         self.assertEqual(parse_route('"component"."coding".{"code": "4323-3"}.0."display"'),
-                            ['component', 'coding', {'code': '4323-3'}, 0, 'display'])
+                         ['component', 'coding', {'code': '4323-3'}, 0, 'display'])
 
     def test_regression(self):
         resources = {
@@ -110,5 +110,6 @@ class Test(TestCase):
                 }
             ]
         }
-        route = parse_route('"bodySite".{"coding":{"system": "https://www.hpa.gov.tw/","code":"999"}}."coding".0."display"')
+        route = parse_route(
+            '"bodySite".{"coding":{"system": "https://www.hpa.gov.tw/","code":"999"}}."coding".0."display"')
         self.assertEqual(get_by_path(resources, route), "原發部位手術切緣距離")

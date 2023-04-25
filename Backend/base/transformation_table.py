@@ -34,8 +34,8 @@ type_list = [
 ]
 
 
-class _ModelFeature:
-    def __init__(self, model_feature_table_position):
+class _TransformationTable:
+    def __init__(self, model_feature_table_position="./config/transformation.csv"):
         self.table = self.__create_table(model_feature_table_position)
 
     @classmethod
@@ -114,6 +114,13 @@ class _ModelFeature:
         return self.table[model_name]
 
 
+if __name__ == "__main__":
+    import json
+
+    model_feature_table = _TransformationTable("../config/transformation.csv")
+    print(json.dumps(model_feature_table.get_model_feature_dict("CHARM"), sort_keys=True, indent=4))
+
+
 def transform_to_correct_type(input_string: str):
     if input_string.lower() == 'true':
         return True
@@ -129,13 +136,3 @@ def transform_to_correct_type(input_string: str):
             output = input_string
 
     return output
-
-
-if __name__ != "__main__":
-    feature_table = _ModelFeature("./config/transformation.csv")
-
-if __name__ == "__main__":
-    import json
-
-    model_feature_table = _ModelFeature("../config/transformation.csv")
-    print(json.dumps(model_feature_table.get_model_feature_dict("CHARM"), sort_keys=True, indent=4))

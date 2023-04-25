@@ -6,13 +6,11 @@ from base.cds_hooks_validator import model_evaluating
 from base.cds_hooks_validator import Card
 from base.cds_hooks_validator import card_determine
 from base.patient_data_search import model_feature_search_with_patient_id
-from base.feature_table import feature_table
-from dotenv import load_dotenv
+from base.object_store import feature_table
+from base.object_store import fhir_class_obj
 from fhirpy.base.exceptions import ResourceNotFound
-from base.fhir_search_obj import fhir_class_obj
 from mocab_models import *
 
-load_dotenv()
 cds_app = cds.App()
 
 

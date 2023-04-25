@@ -2,7 +2,7 @@ import operator
 import enum
 from base import search_sets
 from fhirpy.lib import SyncFHIRResource
-from base.cds_hooks_table import fhir_resources_route, cds_hooks_config_table
+from base.object_store import fhir_resources_route, cds_hooks_config_table
 from base.model_input_transformer import validation
 
 
