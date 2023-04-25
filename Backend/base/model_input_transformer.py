@@ -1,21 +1,44 @@
 import re
 import operator
 from pwn import safeeval
-from base.model_feature_table import feature_table
+from typing import Callable
+from base.object_store import model_feature_table
 
 
-def get_model_input(value, transfer) -> int or float or str or bool:
+def get_model_input(value: int or float or str or bool, transfer: dict) -> int or float or str or bool:
+    """
+    transfer value into model's format.
+
+    :param value: int or float or str or bool
+    :param transfer: dict, {type: numeric or category,
+                            case: list}
+    :return:
+    """
     if transfer['type'] == 'numeric':
-        return value
+        return validation(value)
 
-    category = lambda val, transfer_list: getattr(operator, transfer_list['prefix'])(val, transfer_list['condition'])
     for transfer_dict in transfer['case']:
         for condition in transfer_dict['conditions']:
-            if not category(value, condition):
-                break
-            return transfer_dict['category']
+            try:
+                if not validation(value,
+                                  lambda val, kwargs: getattr(operator, kwargs['prefix'])(val, kwargs['condition']),
+                                  **condition):
+                    break
+                return transfer_dict['category']
+            except TypeError:
+                # feature value is not able to execute the comparison.
+                return value
 
     raise ValueError('Value is not suitable in the configuration.')
+
+
+def validation(value, func: Callable = lambda x, kwargs: x, **kwargs):
+    return func(value, kwargs)
+
+
+if __name__ == "__main__":
+    print(validation("value", lambda val, kwargs: getattr(operator, kwargs['prefix'])(val, kwargs['condition']),
+                     prefix="eq", condition="value"))
 
 
 def pack_list(model_data_dict, transform_style) -> list:
@@ -61,7 +84,7 @@ def transformer(patient_data_dict: dict, model: str) -> list:
     :param model: name of model
     :return: list that are ready for prediction. Sort features by index.
     """
-    transform_style = feature_table.get_model_feature_dict(model_name=model)
+    transform_style = model_feature_table.get_model_feature_dict(model_name=model)
     # First, transfer patient numeric data to model require format
     # getattr(operator, 'eq')(2, 3)
     model_data_dict = dict()
@@ -86,4 +109,3 @@ def transformer(patient_data_dict: dict, model: str) -> list:
     result_list = pack_list(model_data_dict, transform_style)
 
     return result_list
-

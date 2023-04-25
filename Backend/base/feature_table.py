@@ -1,12 +1,12 @@
 import csv
 import re
-from base.model_feature_table import transform_to_correct_type
+from base.transformation_table import transform_to_correct_type
 
 from base.exceptions import FeatureCodeIsEmpty
 
 
 class _FeatureTable:
-    def __init__(self, feature_table_position):
+    def __init__(self, feature_table_position="./config/features.csv"):
         self.table = self.__create_table(feature_table_position)
 
     @classmethod
@@ -53,7 +53,6 @@ class _FeatureTable:
             return table
 
     def get_model_feature_dict(self, model_name):
-        # TODO: table_obj = DefaultMunch.fromDict(table.table), change table into table object
         if model_name not in self.table:
             raise KeyError("Model is not exist in the feature table.")
 
@@ -107,7 +106,6 @@ class DataAliveTime:
     def get_seconds(self):
         return self._seconds
 
-feature_table = _FeatureTable("./config/features.csv")
 
 if __name__ == '__main__':
     from exceptions import FeatureCodeIsEmpty

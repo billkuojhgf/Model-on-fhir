@@ -8,3 +8,7 @@ class FeatureCodeIsEmpty(BaseFHIRError):
 
 class TypeUnknown(BaseFHIRError):
     pass
+
+
+class RegexUnrecognizedException(Exception):
+    pass

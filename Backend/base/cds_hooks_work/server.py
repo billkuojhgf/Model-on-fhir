@@ -7,15 +7,15 @@ flaskApp = Flask(__name__)
 def init(app):
     CORS(flaskApp)
 
-    @flaskApp.route("/")
+    @flaskApp.route("/cds-hooks")
     def hello_world():
         return "Welcome to CDS Service", 200
 
-    @flaskApp.route('/cds-services')
+    @flaskApp.route('/cds-hooks/cds-services')
     def discovery():
         return json.jsonify(app.discovery()), 200
 
-    @flaskApp.route('/cds-services/<id>', methods=['POST'])
+    @flaskApp.route('/cds-hooks/cds-services/<id>', methods=['POST'])
     def service(id):
         requestData = request.json
         try:

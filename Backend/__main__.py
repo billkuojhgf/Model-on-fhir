@@ -1,13 +1,14 @@
 import os
 
-from models.qcsi.mask import mask
-from app import app
+from mocab_models.qCSI.mask import mask  # TODO: 之後要改成從mocab_models中import
+from app import mocab_app
 from flask_cors import CORS
+from cds_hooks import cds_app
 
 
 def init_models():
     names = []
-    model_path = r"./models"
+    model_path = r"mocab_models"
     for model_path_dir in os.listdir(model_path):
         # 阻絕 "__pycache__" folder
         if model_path_dir.startswith("_"):
@@ -26,7 +27,7 @@ def init_models():
                 os.path.exists("{}/{}/model.py".format(model_path, model_path_dir)):
             names.append(model_path_dir)
 
-    models_init_file = open("./models/__init__.py", "w")
+    models_init_file = open("mocab_models/__init__.py", "w")
     models_init_file.write("__all__ = {}\n".format(names))
     models_init_file.close()
 
@@ -34,6 +35,5 @@ def init_models():
 if __name__ == '__main__':
     mask()
     init_models()
-    CORS(app)
-    app.debug = True
-    app.run()
+    CORS(mocab_app)
+    mocab_app.run(port=5050, debug=True)

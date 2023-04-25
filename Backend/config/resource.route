@@ -1,0 +1,9 @@
+# {condition_type}={resource_type}.{*methods}
+datetime_condition=Condition."recordedDate"
+datetime_observation=Observation."effectiveDateTime"
+period_observation=Observation."effectivePeriod"."start"
+encounter_type=Encounter."class"."code"
+gender=Patient."gender"
+age=Patient.get_age()
+edge=Procedure."bodySite".{"coding":{"system": "https://www.hpa.gov.tw/","code":"999"}}."coding".0."display"
+

@@ -1,34 +1,36 @@
-import os
-import csv
 import importlib
-import configparser
 
-from config import configObject as config
 from flask import Flask
+from flask import abort
 from flask import jsonify
 from flask import request
-from flask import abort
 from flask_cors import CORS
-# TODO: munch可以將dictionary轉成Object，日後可能會用到
-from base import patient_data_search as ds
-from base.feature_table import feature_table
-from base.model_input_transformer import transformer
-from models import *
 
-app = Flask(__name__)
-CORS(app)
+mocab_app = Flask(__name__)
+CORS(mocab_app)
+
+from base import patient_data_search as ds
+from base.object_store import feature_table
+from base.model_input_transformer import transformer
+from mocab_models import *
+import smart_on_fhir
 
 # Map the csv into dictionary
 table = feature_table
 
 
-@app.route('/', methods=['GET'])
+@mocab_app.route('/', methods=['GET'])
 def index():
     return "Hello, World!<br/><br/>請在網址列的/後面輸入你要搜尋的病患id即可得出結果<br/>Example: <a " \
-           "href=\"/diabetes?id=test-03121002\">http://localhost:5000/diabetes?id=test-03121002</a> "
+           "href=\"/pima_diabetes?id=test-03121002\">http://localhost:5000/diabetes?id=test-03121002</a> "
 
 
-@app.route('/<api>', methods=['GET'])
+@mocab_app.route('/exist_model')
+def exist_model():
+    return jsonify({"model": feature_table.get_exist_model_name()})
+
+
+@mocab_app.route('/<api>', methods=['GET'])
 def api_with_id(api):
     """
     Description:
@@ -46,18 +48,43 @@ def api_with_id(api):
         }
     """
     # TODO: the hour_alive_time request value
-    if request.values.get('id') is None:
-        abort(400, description="Please fill in patient's ID.")
     patient_id = request.values.get('id')
-    hour_alive_time = None
-    if request.values.get('data_alive_time') is not None:
-        hour_alive_time = request.values.get('hour_alive_time')
+    if patient_id is None:
+        abort(400, description="Please fill in patient's ID.")
+    hour_alive_time = request.values.get('hour_alive_time')  # None if request has no hour_alive_time parameter
 
     patient_data_dict = ds.model_feature_search_with_patient_id(
-        patient_id, table.get_model_feature_dict(api), None, hour_alive_time)
-    print(patient_data_dict)
+        patient_id, table.get_model_feature_dict(api), data_alive_time=hour_alive_time)
     patient_data_dict["predict_value"] = return_model_result(patient_data_dict, api)
     return jsonify(patient_data_dict)
+
+
+@mocab_app.route("/smart/<api>", methods=['GET'])
+def smart_api_with_id(api):
+    patient_id = request.values.get('id')
+    if patient_id is None:
+        abort(400, description="Please fill in patient's ID.")
+
+    if not smart_on_fhir.check_auth():
+        abort(401, description="SMART Auth is not enabled. Launch MoCab SMART Endpoint in EHR First.")
+
+    patient_data_dict = ds.smart_model_feature_search_with_patient_id(
+        patient_id, table.get_model_feature_dict(api))
+
+    return jsonify(patient_data_dict)
+
+
+def str2bool(string: str or None) -> bool:
+    if type(string) is not str:
+        return string
+
+    true_string = ('true', '1', 't', 'y', 'yes', 'yeah', 'yup', "on")
+    false_string = ('false', '0', 'f', 'n', 'no', 'nope', 'nan', 'off')
+    if string.lower() in true_string:
+        return True
+    elif string.lower() in false_string:
+        return False
+    return abort(500, description=f"SMART parameter value unknown: {string}")
 
 
 def verify_data(patient_data_dict, api):
@@ -75,7 +102,7 @@ def verify_data(patient_data_dict, api):
             raise KeyError("{}'s value has no 'value' key.".format(key))
 
 
-@app.route('/<api>/change', methods=['POST'])
+@mocab_app.route('/<api>/change', methods=['POST'])
 # POST method will get the object body from frontend
 # POST method will only return predict value(double or integer)
 def api_with_post(api):
@@ -116,7 +143,7 @@ def return_model_result(patient_data_dict, api):
 def import_model():
     # TODO: Need to figure out what actions does this function done, and optimize it.
     # get a handle on the module
-    mdl = importlib.import_module('models')
+    mdl = importlib.import_module('mocab_models')
 
     # is there an __all__?  if so respect it
     if "__all__" in mdl.__dict__:
@@ -132,6 +159,5 @@ def import_model():
 import_model()
 
 if __name__ == "__main__":
-    print(globals())
-    app.debug = True
-    app.run()
+    mocab_app.debug = True
+    mocab_app.run()
