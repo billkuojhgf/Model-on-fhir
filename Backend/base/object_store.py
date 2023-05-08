@@ -9,3 +9,6 @@ cds_hooks_config_table = _HooksConfigTable()
 fhir_resources_route = _FhirResourceRoute()
 feature_table = _FeatureTable()
 model_feature_table = _TransformationTable()
+
+spc_model_feature_table = _TransformationTable("./config/transformation_spc.csv")
+pass

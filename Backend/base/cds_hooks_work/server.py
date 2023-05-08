@@ -1,21 +1,22 @@
-from flask import Flask, json, request
+from flask import Flask, json, request, Blueprint
 from flask_cors import CORS
 
-flaskApp = Flask(__name__)
+# flaskApp = Flask(__name__)
+flaskApp = Blueprint('cds_hooks', __name__)
 
 
 def init(app):
-    CORS(flaskApp)
+    # CORS(flaskApp)
 
-    @flaskApp.route("/cds-hooks")
+    @flaskApp.route("/")
     def hello_world():
         return "Welcome to CDS Service", 200
 
-    @flaskApp.route('/cds-hooks/cds-services')
+    @flaskApp.route('/cds-services')
     def discovery():
         return json.jsonify(app.discovery()), 200
 
-    @flaskApp.route('/cds-hooks/cds-services/<id>', methods=['POST'])
+    @flaskApp.route('/cds-services/<id>', methods=['POST'])
     def service(id):
         requestData = request.json
         try:
@@ -28,5 +29,5 @@ def init(app):
     return flaskApp
 
 
-def serve(**kwargs):
-    flaskApp.run(**kwargs)
+# def serve(**kwargs):
+#     flaskApp.run(**kwargs)

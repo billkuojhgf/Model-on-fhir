@@ -2,6 +2,7 @@ import joblib
 
 
 def predict(data: list):
+    print(data)
     # @data comes from two places, one is from diabetes_predict(), the other is from flask(not sure where yet).
     # data allows two kind of value set, one is dictionary(the value returned from get_resources()),
     #   another is value(the value comes from frontend)
