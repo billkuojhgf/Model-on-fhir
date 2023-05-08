@@ -1,13 +1,14 @@
 from .service import Service
 from .response import Response
-from .server import init, serve
+from .server import init
 from typing import List
-from flask import Flask
-
+from flask import Blueprint
+# from flask import Flask
 
 class App(object):
     services: List[Service] = []
-    server: Flask
+    # server: Flask
+    server: Blueprint
 
     def __init__(self, services: List[Service] = None):
         if services is None:
@@ -62,5 +63,5 @@ class App(object):
     def encounter_discharge(self, *args, **kwargs):
         return self._handler_decorator("encounter-discharge", *args, **kwargs)
 
-    def serve(self, **kwargs):
-        serve(**kwargs)
+    # def serve(self, **kwargs):
+    #     serve(**kwargs)

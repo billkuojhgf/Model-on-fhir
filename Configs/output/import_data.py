@@ -38,7 +38,11 @@ def create_resource(
     session = requests.session()
     for fname in os.listdir(path):
         input_file = open(os.path.join(path, fname), encoding="utf-8")
-        json_dict = json.load(input_file)
+        try:
+            json_dict = json.load(input_file)
+        except Exception as e:
+            print("Name of file: {}".format(fname))
+            raise e
         id = None
 
         resources = json_dict['resourceType']

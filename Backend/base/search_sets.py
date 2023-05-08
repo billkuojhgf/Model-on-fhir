@@ -3,6 +3,9 @@ from __future__ import annotations
 import re
 # import smart_on_fhir
 from abc import ABC, abstractmethod
+
+import numpy as np
+
 from base.object_store import fhir_class_obj
 from dateutil.relativedelta import relativedelta
 from typing import Dict
@@ -49,8 +52,19 @@ class GetFuncMgmt:
 
     def get_data_with_func(self, resources: dict) -> dict:
         """
-        The Context delegates some work to the Strategy object instead of
-        implementing multiple versions of the algorithm on its own.
+        2023/05/02 Update: The resources is a dictionary with listed feature key-value pairs.
+        e.g.:
+        {
+            "date": ["2020-12-15", "2020-12-14", "2020-12-13"],
+            "value": [87, 87, 87]
+        }
+
+        Then, the function will return the result with single date and value based on its strategy.
+        e.g.:
+        {
+            "date": "2020-12-15",
+            "value": 87
+        }
         """
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
@@ -77,50 +91,45 @@ class GetFuncInterface(ABC):
 class GetMax(GetFuncInterface):
     def execute(self, data: dict) -> dict:
         """
-        For Observation used only, Return the maximum SyncFHIRResources
-        @todo: Complete the code.
-        @param data:
-        @return:
+        GetMax 的目的是取得時間內最大的資料。需要確定數值是數字型態。
+
+        @param: a dictionary with listed feature key-value pairs
+        @return: a dictionary with single feature key-value pairs
         """
-        pass
+        data_date_list = data['date']
+        data_value_list = data['value']
+        max_index = np.argmax(data_value_list)
+
+        return {"date": data_date_list[max_index], "value": data_value_list[max_index]}
 
 
 class GetMin(GetFuncInterface):
     def execute(self, data: dict) -> dict:
         """
-        For Observation used only, Return the minimum SyncFHIRResources
-        @todo: Complete the code.
-        @param data:
-        @return:
+        GetMin 的目的是取得時間內最小的資料。需要確定數值是數字型態。
+
+        @param: a dictionary with listed feature key-value pairs
+        @return: a dictionary with single feature key-value pairs
         """
-        pass
+        data_date_list = data['date']
+        data_value_list = data['value']
+        min_index = np.argmin(data_value_list)
+
+        return {"date": data_date_list[min_index], "value": data_value_list[min_index]}
 
 
 class GetLatest(GetFuncInterface):
     def execute(self, data: dict) -> dict:
         """
-        GetLatest是每個feature預設的Search Type，所以如果現在是Patient的get_age，也會因為工作流程的關係而需要調用此函式，
-        所以要回傳string
-        XXX: 或許其實Feature_table可以在Search_Type的部分留白表示不會用到這裡?
+        GetLatest 的目的是取得最新一筆的資料。
 
-        @param data: dict, 因為要配合上面的GetMax & GetMin，可能會需要用到component-code
-                     {"resource": list(SyncFHIRResources) or int, "component-code": None or str,
-                      "type": "Patient" or "Condition" or "Observation"}
-        @return: SyncFHIRResources, int
+        @param: a dictionary with listed feature key-value pairs
+        @return: a dictionary with single feature key-value pairs
         """
-        data_list = data['resource']
-        # Observation and Condition use
-        # If Condition data_list is None(代表沒有此病癥), then the data_list type would be None, so it won't be executing
-        # the If statement.
-        if type(data_list) == list:
-            if len(data_list) == 0:
-                # TODO: 顯示什麼resources沒有data
-                # TODO: 沒有Data也要繼續執行下一步
-                raise Exception("No data inside the data list.")
-            # 如果data_list裡面是有資料的，就回傳
-            data['resource'] = data_list[0]
-        # Patient or Condition with None resources use
-        return data
+        data_date_list = data['date']
+        data_value_list = data['value']
+
+        return {"date": data_date_list[0], "value": data_value_list[0]}
 
 
 class ResourceMgmt:
@@ -171,7 +180,7 @@ class ResourceMgmt:
         try:
             resource_list = self._strategy.search(self, patient_id, table, default_time, data_alive_time)
         except Exception as e:
-            raise Exception(e)
+            raise e
         return resource_list
 
     def get_datetime_with_resources(self, data_dictionary: Dict, default_time: datetime):
@@ -300,15 +309,7 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
                 """
                 如果再次搜尋後的結果依舊為0，代表資料庫中沒有此數據，回傳錯誤到前端(可能還可以想一些其他的解決方案)
                 """
-                if default_value is None:
-                    raise ResourceNotFound(
-                        'Could not find the resources {code} under time {time}, no enough data for the patient'.format(
-                            code=params['code'],
-                            time=params['date__ge']
-                        )
-                    )
-                else:
-                    results = default_value
+                results = default_value
 
         return {'resource': results, 'component_code': params['code'] if is_in_component else None,
                 'type': 'Observation'}
@@ -470,7 +471,6 @@ def get_patient_resources(patient_id,
     if search_type == '':
         patient_resource_result = patient_data_dict
     # 如果有輸入search_type，檢查是不是latest, min or max
-    # XXX: 希望能是寫活的，可以自動判別目前已經開發出來的Concrete getFuncInterface
     else:
         try:
             patient_get_setting_mgmt = GetFuncMgmt()
@@ -478,6 +478,38 @@ def get_patient_resources(patient_id,
             patient_resource_result = patient_get_setting_mgmt.get_data_with_func(patient_data_dict)
         except KeyError:
             raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
+
+    return patient_resource_result
+
+
+def get_datetime_value_with_func(patient_data_dict: dict, table):
+    """
+    透過GetXXX的class來取得資料
+    :param patient_data_dict: dict, 內有每個feature的date&value
+    e.g.: {
+               "date": ["2020-12-15", "2020-12-14", "2020-12-13"],
+               "value": [87, 87, 87]
+           },...
+    :param table:
+
+    :return: dict, 內有feature的date&value
+    e.g.: {
+         "date": "2020-12-15",
+         "value": 87
+        }
+    """
+    search_type = str(table['search_type']).capitalize()
+    # 沒有輸入search_type的狀況: 如Patient的get_age
+    if search_type == '':
+        search_type = 'Latest'
+    # 如果有輸入Search_type，即會執行GetXXX的class
+    try:
+        patient_get_setting_mgmt = GetFuncMgmt()
+        patient_get_setting_mgmt.strategy = globals()["Get" + search_type]
+        patient_resource_result = patient_get_setting_mgmt.get_data_with_func(patient_data_dict)
+    except KeyError:
+        # 如果沒有支援的search_type，就會raise AttributeError
+        raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
 
     return patient_resource_result
 

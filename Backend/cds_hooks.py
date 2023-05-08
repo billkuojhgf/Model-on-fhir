@@ -1,15 +1,14 @@
-import os
 import base.cds_hooks_work as cds
-from app import return_model_result
-from config import configObject as config
+
+from base_module import return_model_result
 from base.cds_hooks_validator import model_evaluating
 from base.cds_hooks_validator import Card
 from base.cds_hooks_validator import card_determine
 from base.patient_data_search import model_feature_search_with_patient_id
 from base.object_store import feature_table
 from base.object_store import fhir_class_obj
+from config import configObject as config
 from fhirpy.base.exceptions import ResourceNotFound
-from mocab_models import *
 
 cds_app = cds.App()
 
@@ -115,7 +114,7 @@ def generate_cds_card(patient_id, patient_data_dictionary, model_name) -> cds.Ca
     return card
 
 
-if __name__ == '__main__':
-    debug = os.environ.get('DEBUG', True)
-    port = os.environ.get("PORT", 5001)
-    cds_app.serve(host="0.0.0.0", debug=debug, port=port)
+# if __name__ == '__main__':
+#     debug = os.environ.get('DEBUG', True)
+#     port = os.environ.get("PORT", 5001)
+#     cds_app.serve(host="0.0.0.0", debug=debug, port=port)
