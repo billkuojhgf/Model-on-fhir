@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import re
-# import smart_on_fhir
+import logging
 from abc import ABC, abstractmethod
 
 import numpy as np
 
+from base.exceptions import RouteNotImplemented
 from base.object_store import fhir_class_obj
+from base.object_store import fhir_resources_route
 from dateutil.relativedelta import relativedelta
-from typing import Dict
-from fhirpy.base.exceptions import ResourceNotFound
+from typing import Dict, Any
 from fhirpy.base.searchset import FHIR_DATE_FORMAT
 from fhirpy.base.searchset import datetime
 from fhirpy.lib import SyncFHIRResource
+
+from base.route_converter import get_by_path
 
 CLIENT: SyncFHIRResource
 
@@ -69,8 +72,8 @@ class GetFuncMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient's data with {} method".format(self._strategy.__name__))
-        resource = self._strategy.execute(self, resources)
+        logging.info("Getting patient's data with {} method".format(self._strategy.__name__))
+        resource = self._strategy.execute(self._strategy, resources)
         return resource
 
 
@@ -174,29 +177,32 @@ class ResourceMgmt:
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient's data with {} resources".format(self._strategy.__name__))
+        logging.info("Getting patient's data with {} resources".format(self._strategy.__name__))
         global CLIENT
         CLIENT = fhir_class_obj.client()
+
         try:
-            resource_list = self._strategy.search(self, patient_id, table, default_time, data_alive_time)
+            dict_with_resources = self._strategy.search(self._strategy, patient_id, table, default_time,
+                                                        data_alive_time)
         except Exception as e:
             raise e
-        return resource_list
 
-    def get_datetime_with_resources(self, data_dictionary: Dict, default_time: datetime):
+        return dict_with_resources
+
+    def get_datetime_with_resources(self, resource: Dict or SyncFHIRResource, route: list, default_time: datetime):
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient data's datetime with {} method".format(self._strategy.__name__))
-        resource_time = self._strategy.get_datetime(self, data_dictionary, default_time)
-        return resource_time
+        logging.info("Getting patient data's datetime with {} method".format(self._strategy.__name__))
+        resource_time = self._strategy.get_datetime(self._strategy, resource, route, default_time)
+        return _return_date_time_formatter(resource_time)
 
-    def get_value_with_resources(self, data_dictionary: Dict):
+    def get_value_with_resources(self, resource: dict or SyncFHIRResource, route: list):
         if self._strategy is None:
             raise AttributeError("Strategy was not set yet. Set the strategy with 'foo.strategy = bar()'")
 
-        print("Getting patient data's value with the {} method".format(self._strategy.__name__))
-        resource_value = self._strategy.get_value(self, data_dictionary)
+        logging.info("Getting patient data's value with the {} method".format(self._strategy.__name__))
+        resource_value = self._strategy.get_value(self._strategy, resource, route)
         return resource_value
 
 
@@ -210,7 +216,17 @@ class ResourcesInterface(ABC):
     """
 
     @abstractmethod
-    def search(self, patient_id: str, table: dict, default_time: datetime, data_alive_time=None) -> Dict:
+    def search(self, patient_id: str, table: dict, default_time: datetime, data_alive_time) -> Dict:
+        """
+        Search FHIR Resource from FHIR Server and returns the resource list.
+        :param patient_id: ID of patient
+        :param table: the configuration of the feature that has been defined in the feature table
+        :param default_time: The time we default, usually are the time of the prediction (Such as now), but may would be
+            used for training.
+        :param data_alive_time: The time we want to get the data. If the data is not alive, we will not get the data.
+        :return: Dictionary, inside the dictionary are the resources packed into a list and the type of resource.
+            resource: list, type: str.capitalize()
+        """
         pass
 
 
@@ -224,25 +240,32 @@ class GetValueAndDatetimeInterface(ABC):
     """
 
     @abstractmethod
-    def get_datetime(self, dictionary: dict, default_time: datetime) -> str:
-        # dictionary = {'resource': resource, 'component-code': None if type is None else type(str),
-        # 'type': 'Observation' or 'Condition' or 'Patient'} 如果給過來的資料並非是object，就直接回傳該數值的time格式
+    def get_datetime(self, resource: dict or SyncFHIRResource, route: list or None, default_time: datetime) -> str:
+        """
+        Get the datetime of resource. Note that if the resource type is 'Patient', the result would be now.
+
+        :param resource: fhir resource
+        :param default_time: The time we default, usually are the time of the prediction (Such as now), but may would be
+            used for training.
+        :param route: the route of the resource, default is None
+        :return: the datetime of the resource or None. The datetime format is YYYY-MM-DDThh:mm
+        """
         pass
 
     @abstractmethod
-    def get_value(self, dictionary: dict) -> int or str or float or bool:
+    def get_value(self, resource: dict or SyncFHIRResource, route: list or None) -> int or str or float or bool:
         """
-        
-        如果是Patient，那他的resources放的應該就是integer了，可以直接回傳
-        @param dictionary: dict: {'resource': resource, 'component-code': None if type is None else type(str),
-        'type': 'Observation' or 'Condition' or 'Patient'} 
-        @return: 
-        """""
+        Get the value of resource.
+        :param resource: fhir resource
+        :param route: the route of the resource, default is None. Note that if the resource type is 'Patient',
+        the route might be some built-in functions.
+        :return: the value of the resource or None
+        """
 
         pass
 
 
-def _return_date_time_formatter(datetime_string: str) -> str or None:
+def _return_date_time_formatter(datetime_string) -> str or None:
     """
         This is a function that returns a standard DateTime format
         While using it, make sure the datetime_string parameter is a valid 'datetime' string
@@ -290,7 +313,6 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
             **params
         ).sort('-date')
         results = search.fetch()
-        is_in_component = False
 
         if len(results) == 0:
             """
@@ -303,42 +325,126 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
                 **params_component
             ).sort('-date')
             results = search.fetch()
-            is_in_component = True
 
             if len(results) == 0:
                 """
                 如果再次搜尋後的結果依舊為0，代表資料庫中沒有此數據，回傳錯誤到前端(可能還可以想一些其他的解決方案)
                 """
-                results = default_value
+                results = [default_value]
 
-        return {'resource': results, 'component_code': params['code'] if is_in_component else None,
-                'type': 'Observation'}
+        return {'resource': results, 'type': 'Observation'}
 
-    def get_datetime(self, dictionary: dict,
+    def get_datetime(self,
+                     resource,
+                     route,
                      default_time: datetime = datetime.datetime.now()) -> str | None:
-        try:
-            return _return_date_time_formatter(dictionary['resource'].effectiveDateTime)
-        except (AttributeError, KeyError):
-            try:
-                return _return_date_time_formatter(dictionary['resource'].effectivePeriod.start)
-            except (AttributeError, KeyError):
-                return None
+        # 很可能是Default的值，或者資料庫根本找不到
+        if type(resource) is not dict and type(resource) is not SyncFHIRResource:
+            return None
 
-    def get_value(self, dictionary: dict) -> int | str:
-        # Two situation: one is to get the value of resource, the other is to get the value of resource.component
-        if type(dictionary['resource']) != SyncFHIRResource:
-            return dictionary['resource']
-
-        if dictionary['component_code'] is not None:
-            for component in dictionary['resource'].component:
-                for coding in component.code.coding:
-                    if coding.code == dictionary['component_code']:
-                        return component.valueQuantity.value
+        route_list = []
+        if route is None:
+            route_list.append(fhir_resources_route.get_route("observation_datetime"))
+            route_list.append(fhir_resources_route.get_route("observation_period"))
         else:
-            try:
-                return dictionary['resource'].valueQuantity.value
-            except KeyError:
-                return dictionary['resource'].valueString
+            for item in route:
+                route_list.append(fhir_resources_route.get_route(item))
+
+        for item in route_list:
+            if get_by_path(resource, item) is not None:
+                return get_by_path(resource, item)
+
+        return None
+
+    def get_value(self, resource, route) -> int or float or str or None:
+        # Two situation: one is to get the value of resource, the other is to get the value of resource.component
+        if type(resource) is not dict and type(resource) is not SyncFHIRResource:
+            return resource
+
+        route_list = []
+        if route is None:
+            route_list.append(fhir_resources_route.get_route("observation_quantity"))
+        else:
+            for item in route:
+                route_list.append(fhir_resources_route.get_route(item))
+        for item in route_list:
+            if get_by_path(resource, item) is not None:
+                return get_by_path(resource, item)
+
+        return None
+
+
+class Procedure(ResourcesInterface, GetValueAndDatetimeInterface):
+
+    def search(self, patient_id: str, table: dict, default_time: datetime, data_alive_time) -> Dict:
+        default_value = table['default_value']
+
+        params = {
+            "subject": patient_id,
+            "code": table['code'],
+        }
+
+        # if data_alive_time is not none, then ignore them
+        # Usually used for SMART endpoint.
+        if table['data_alive_time'] is not None:
+            params['date__ge'] = (default_time - relativedelta(
+                years=table['data_alive_time'].get_years(),
+                months=table['data_alive_time'].get_months(),
+                days=table['data_alive_time'].get_days(),
+                hours=table['data_alive_time'].get_hours(),
+                minutes=table['data_alive_time'].get_minutes(),
+                seconds=table['data_alive_time'].get_seconds()
+            )).strftime(FHIR_DATE_FORMAT)
+
+        resources = CLIENT.resources('Procedure')
+        search = resources.search(
+            **params
+        ).sort('-date')
+        results = search.fetch()
+
+        if len(results) == 0:
+            """
+            如果再次搜尋後的結果依舊為0，代表資料庫中沒有此數據，回傳錯誤到前端(可能還可以想一些其他的解決方案)
+            """
+            results = [default_value]
+
+        return {'resource': results, 'type': 'Procedure'}
+
+    def get_datetime(self, resource: dict or SyncFHIRResource, route: list or None, default_time: datetime) \
+            -> Any | None:
+        if type(resource) is not dict and type(resource) is not SyncFHIRResource:
+            return None
+
+        route_list = []
+        if route is None:
+            route_list.append(fhir_resources_route.get_route("procedure_datetime"))
+            route_list.append(fhir_resources_route.get_route("procedure_period"))
+        else:
+            for item in route:
+                route_list.append(fhir_resources_route.get_route(item))
+
+        for item in route_list:
+            if get_by_path(resource, item) is not None:
+                return get_by_path(resource, item)
+
+        return None
+
+    def get_value(self, resource: dict or SyncFHIRResource, route: list or None) -> int or str or float or bool:
+        # Two situation: one is to get the value of resource, the other is to get the value of resource.component
+        if type(resource) is not dict and type(resource) is not SyncFHIRResource:
+            return resource
+
+        route_list = []
+        if route is None:
+            raise RouteNotImplemented("Procedure should have route.")
+        else:
+            for item in route:
+                route_list.append(fhir_resources_route.get_route(item))
+        for item in route_list:
+            if get_by_path(resource, item) is not None:
+                return get_by_path(resource, item)
+
+        return None
 
 
 class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
@@ -362,17 +468,38 @@ class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
         # 如果result的長度為0，代表病人沒有這個症狀，那就回傳None, 否則回傳結果
         # Consider: 如果這裡不回傳result, 而是回傳true or false，又會如何？
         # Consider: 我有需要回傳整個result list嗎？還是只要回傳一個就好？有什麼情況需要我回傳整個list？計算染疫次數嗎？
-        return {'resource': None if len(results) == 0 else results, 'component_code': None,
-                'type': 'Condition'}
+        return {'resource': [None] if len(results) == 0 else results, 'type': 'Condition'}
 
-    def get_datetime(self, dictionary: dict, default_time: datetime = datetime.datetime.now()) -> str | None:
-        try:
-            return _return_date_time_formatter(dictionary['resource'].recordedDate)
-        except AttributeError:
-            return None
+    def get_datetime(self, resource, route, default_time: datetime = datetime.datetime.now()) -> str | None:
+        route_list = []
+        if route is None:
+            route_list.append(fhir_resources_route.get_route("condition_datetime"))
+        else:
+            for item in route:
+                route_list.append(fhir_resources_route.get_route(item))
 
-    def get_value(self, dictionary: dict) -> bool:
-        return False if dictionary['resource'] is None else True
+        for item in route_list:
+            if get_by_path(resource, item) is not None:
+                return get_by_path(resource, item)
+
+        return None
+
+    def get_value(self, resource, route: list or None) -> bool or Any:
+        if type(resource) is None:
+            return False
+
+        route_list = []
+        if route is None:
+            return True
+        else:
+            for item in route:
+                route_list.append(fhir_resources_route.get_route(item))
+
+        for item in route_list:
+            if get_by_path(resource, item) is not None:
+                return get_by_path(resource, item)
+
+        raise ValueError("Can't find the value of condition")
 
 
 class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
@@ -385,139 +512,64 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
         search = resources.search(_id=patient_id).limit(1)
         patient = search.get()
 
-        result = None
-        # Patient 可以有兩種情況，一種是直接回傳Patient的資料，另一種是透過strategy去取得資料
-        # 如果Feature Table 中有code，就是取得Strategy，反之就是取Resource route 的資料
-        try:
-            result = getattr(self._strategy, "get_{}".format(str(table['code']).lower()))(patient, default_time)
-        except KeyError:
-            pass
-
-
         return {
-            "resource": result, "component_code": None, 'type': "Patient"
+            "resource": [patient], 'type': "Patient"
         }
 
     @staticmethod
-    def get_age(patient: SyncFHIRResource, default_time: datetime = datetime.datetime.now()) -> int:
+    def get_age(resource: dict or SyncFHIRResource, default_time: datetime = datetime.datetime.now()) -> int:
         patient_birthdate = datetime.datetime.strptime(
-            patient.birthDate, FHIR_DATE_FORMAT)
+            resource.birthDate, FHIR_DATE_FORMAT)
         # If we need to calculate the real age that is 1 year before or so (depends on the default_time)
         # , then calculate it by minus method.
         age = default_time - patient_birthdate
         return int(age.days / 365)
 
-    def get_datetime(self, dictionary: dict, default_time=datetime.datetime.now()) -> str:
+    def get_datetime(self,
+                     resource,
+                     route,
+                     default_time: datetime = datetime.datetime.now()) -> str | None:
         """
-        直接Return datetime format就好
-        @param dictionary:
-        @param default_time:
-        @return:
+
+        :param resource:
+        :param default_time:
+        :param route:
+        :return:
         """
-        return default_time.strftime("%Y-%m-%d")
+        route_list = []
+        if route is None:
+            return default_time.strftime("%Y-%m-%d")
+        else:
+            for item in route:
+                route_list.append(fhir_resources_route.get_route(item))
 
-    def get_value(self, dictionary: dict) -> int:
+        for item in route_list:
+            if get_by_path(resource, item) is not None:
+                return get_by_path(resource, item)
+
+        return None
+
+    def get_value(self, resource, route) -> int:
         """
-        直接Return就好
-        @param dictionary:
-        @return:
+
+        :param resource:
+        :param route:
+        :return:
         """
-        if type(dictionary['resource']) is int:
-            return dictionary['resource']
 
+        if type(route) is None:
+            raise RouteNotImplemented("Route should not be none, please check the value_route in the feature table")
 
-def get_patient_resources(patient_id,
-                          table,
-                          default_time: datetime = datetime.datetime.now(),
-                          data_alive_time=None) -> dict or (dict, dict):
-    """
-    The function gets the patient's resources from the database and return
-    :param patient_id: patient's id
-    :param table: feature's table,
-                  dict type with {'code', 'data_alive_time', 'type_of_data', 'default_value', 'search_type'}
-    :param default_time: the time of the default, for model training used. DEFAULT=datetime.now()
-    :param data_alive_time: the time range, start from the default_time.
-                            e.g. if the data_alive_time is 2 years, and the default_time is not, the server will search
-                                 the data that is between now and two years ago
-    :return:
-            Dict,
-                {"resource": SyncFHIRResources, "component-code": str or None,
-                    "type": str(Resource name with capitalized)}
-    """
+        route_list = []
+        for item in route:
+            route_list.append(fhir_resources_route.get_route(item))
 
-    # 先從FHIR Server取得一系列的病患數據。
-    # GetResourceMgmt的全稱是Get Patient Data Resource Management, 為呼叫各種不同FHIR Resources的管理工具
-    # 透過obj.strategy設定要找尋的FHIR Resource, 然後使用get_patient_resources()來執行搜尋
-    """
-    主要有三種不同的Resources: Observation, Condition, Patient
-    
-    Observation因為會有component-code的可能，所以相關程式碼會比較複雜
-    Condition目前相對單純，就是使用時間大於等於條件與code等於多少就好了
-    """
-
-    patient_resources_mgmt = ResourceMgmt()
-    patient_resources_mgmt.strategy = globals()[str(table["type_of_data"]).capitalize()]
-
-    patient_data_dict = patient_resources_mgmt.get_data_with_resources(patient_id,
-                                                                       table,
-                                                                       default_time,
-                                                                       data_alive_time)
-
-    # 然後再根據不同的欲取得的資料設定(如最新的資料, 最大的資料, 最小的資料...)從data_list中取得符合設定的data
-    # 該設定可以在features.csv中的search_type column設定
-
-    """
-    主要會有四種不同的設定: NULL, latest, min, max
-    latest為取得最新的資料, min為取得資料集中，數值最小的資料, max為取得資料集中，數字最大的資料, 
-    NULL就是不做任何處置，會使用這個設定的數值有Patient age，
-    因為在Patient resources中，age會直接計算出年齡並回傳結果，所以不用再取得數值了
-    """
-    search_type = str(table['search_type']).capitalize()
-    # 沒有輸入search_type的狀況: 如Patient的get_age
-    if search_type == '':
-        patient_resource_result = patient_data_dict
-    # 如果有輸入search_type，檢查是不是latest, min or max
-    else:
-        try:
-            patient_get_setting_mgmt = GetFuncMgmt()
-            patient_get_setting_mgmt.strategy = globals()["Get" + search_type]
-            patient_resource_result = patient_get_setting_mgmt.get_data_with_func(patient_data_dict)
-        except KeyError:
-            raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
-
-    return patient_resource_result
-
-
-def get_datetime_value_with_func(patient_data_dict: dict, table):
-    """
-    透過GetXXX的class來取得資料
-    :param patient_data_dict: dict, 內有每個feature的date&value
-    e.g.: {
-               "date": ["2020-12-15", "2020-12-14", "2020-12-13"],
-               "value": [87, 87, 87]
-           },...
-    :param table:
-
-    :return: dict, 內有feature的date&value
-    e.g.: {
-         "date": "2020-12-15",
-         "value": 87
-        }
-    """
-    search_type = str(table['search_type']).capitalize()
-    # 沒有輸入search_type的狀況: 如Patient的get_age
-    if search_type == '':
-        search_type = 'Latest'
-    # 如果有輸入Search_type，即會執行GetXXX的class
-    try:
-        patient_get_setting_mgmt = GetFuncMgmt()
-        patient_get_setting_mgmt.strategy = globals()["Get" + search_type]
-        patient_resource_result = patient_get_setting_mgmt.get_data_with_func(patient_data_dict)
-    except KeyError:
-        # 如果沒有支援的search_type，就會raise AttributeError
-        raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
-
-    return patient_resource_result
+        for item in route_list:
+            if "()" in item[0]:
+                return getattr(self, item[0].replace("()", ""))(resource)
+            else:
+                if get_by_path(resource, item) is not None:
+                    return get_by_path(resource, item)
 
 
 def get_patient_resources_data_set(patient_id,
@@ -551,7 +603,6 @@ def get_patient_resources_data_set(patient_id,
 
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(table["type_of_data"]).capitalize()]
-    table['data_alive_time'] = None
     patient_data_dict_origin = patient_resources_mgmt.get_data_with_resources(patient_id,
                                                                               table,
                                                                               default_time,
@@ -559,40 +610,53 @@ def get_patient_resources_data_set(patient_id,
     return patient_data_dict_origin
 
 
-def get_resource_datetime(data: Dict, default_time: datetime) -> str or None:
+def get_resource_datetime(data: Dict, table: Dict, default_time: datetime) -> str or None:
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(data['type']).capitalize()]
-    data_datetime = patient_resources_mgmt.get_datetime_with_resources(data, default_time)
+    data_datetime = patient_resources_mgmt.get_datetime_with_resources(data["resource"],
+                                                                       table['datetime_route'],
+                                                                       default_time)
     return data_datetime
 
 
-def get_resource_value(data: Dict) -> int or float or str or bool:
+def get_resource_value(data: Dict, table: Dict) -> int or float or str or bool:
+    if type(data["resource"]) is not dict and type(data["resource"]) is not SyncFHIRResource:
+        return data["resource"]
+
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(data['type']).capitalize()]
-    data_value = patient_resources_mgmt.get_value_with_resources(data)
+    data_value = patient_resources_mgmt.get_value_with_resources(data["resource"],
+                                                                 table['value_route'])
     return data_value
 
 
-def get_resource_datetime_and_value(data: Dict, default_time: datetime) -> (str or None, int or float or str or bool):
-    patient_resources_mgmt = ResourceMgmt()
-    patient_resources_mgmt.strategy = globals()[str(data['type']).capitalize()]
-    data_datetime = patient_resources_mgmt.get_datetime_with_resources(data, default_time)
-    data_value = patient_resources_mgmt.get_value_with_resources(data)
-    return data_datetime, data_value
+def get_datetime_value_with_func(patient_data_dict: dict, table):
+    """
+    透過GetXXX的class來取得資料
+    :param patient_data_dict: dict, 內有每個feature的date&value
+    e.g.: {
+               "date": ["2020-12-15", "2020-12-14", "2020-12-13"],
+               "value": [87, 87, 87]
+           },...
+    :param table:
 
+    :return: dict, 內有feature的date&value
+    e.g.: {
+         "date": "2020-12-15",
+         "value": 87
+        }
+    """
+    search_type = str(table['search_type']).capitalize()
+    # 沒有輸入search_type的狀況: 如Patient的get_age
+    if search_type == '':
+        search_type = 'Latest'
+    # 如果有輸入Search_type，即會執行GetXXX的class
+    try:
+        patient_get_setting_mgmt = GetFuncMgmt()
+        patient_get_setting_mgmt.strategy = globals()["Get" + search_type]
+        patient_resource_result = patient_get_setting_mgmt.get_data_with_func(patient_data_dict)
+    except KeyError:
+        # 如果沒有支援的search_type，就會raise AttributeError
+        raise AttributeError("'{}' search_type is not supported now, check it again.".format(table['search_type']))
 
-if __name__ == "__main__":
-    from base.object_store import feature_table
-
-    patient__id = "test-03121002"
-    feature__table = feature_table.get_model_feature_dict('NSTI')
-    default_time = datetime.datetime.now()
-
-    patient_result_dict = dict()
-    for key in feature__table:
-        patient_result_dict[key] = \
-            get_patient_resources(patient_id=patient__id, table=feature__table[key], default_time=default_time)
-        print(patient_result_dict[key])
-
-    for key in patient_result_dict:
-        print(key, get_resource_datetime_and_value(patient_result_dict[key], default_time))
+    return patient_resource_result

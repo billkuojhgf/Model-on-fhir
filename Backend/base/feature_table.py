@@ -7,12 +7,14 @@ from base.exceptions import FeatureCodeIsEmpty
 
 class _FeatureTable:
     def __init__(self, feature_table_position="./config/features.csv"):
+        # TODO: 可以改成Object，以方便後續讀取資料
         self.table = self.__create_table(feature_table_position)
 
     @classmethod
     def __create_table(cls, feature_table_position):
         table = {}
-        special_field_sets = ('model', "feature", "code", "code_system", "data_alive_time", "default_value")
+        special_field_sets = ('model', "feature", "code", "code_system", "data_alive_time", "default_value"
+                              , "value_route", "datetime_route")
         with open(feature_table_position, newline='') as feature_table_file:
             rows = csv.DictReader(feature_table_file)
             for row in rows:
@@ -46,6 +48,11 @@ class _FeatureTable:
 
                 temp_table['default_value'] = None if row['default_value'] == '' \
                     else transform_to_correct_type(row['default_value'])
+
+                # 選擇Value and Datetime
+                temp_table['value_route'] = row['value_route'].split('&') if row['value_route'] != '' else None
+                temp_table['datetime_route'] = row['datetime_route'].split('&') if row['datetime_route'] != '' else None
+
                 # 剩餘的key value就用迴圈建立，因為沒什麼特別的了
                 for key, value in row.items():
                     if key not in special_field_sets:

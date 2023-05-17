@@ -1,19 +1,2 @@
 # {condition_type}={resource_type}.{*methods}
-gender=Patient.gender
-procedure_datetime=Procedure.performedDateTime
-margin_of_surgery=Procedure.bodySite.0.coding.0.code
-grade=Observation.valueCodeableConcept.coding.0.code
-tumor_size_quantity=Observation.component.0.valueQuantity.value
-clinical_stage=Observation.valueCodableConcept.coding.0.code
-pathologic_stage=Observation.valueCodableConcept.coding.0.code
-lymph_invaded_amount=Observation.component.{code:coding.{code:"NPOSIT"}}.valueQuantity.value
-height=Observation.valueQuantity.value
-weight=Observation.valueQuantity.value
-smoking_amount=Observation.component.{code:coding.{code:"amount"}}.valueCodableConcept.coding.0.code
-smoking_years=Observation.component.{code:coding.{code:"year"}}.valueCodableConcept.coding.0.code
-smoking_quit=Observation.component.{code:coding.{code:"quit"}}.valueCodableConcept.coding.0.code
-betel_nut_amount=Observation.component.{code:coding.{code:"amount"}}.valueCodableConcept.coding.0.code
-betel_nut_years=Observation.component.{code:coding.{code:"year"}}.valueCodableConcept.coding.0.code
-betel_nut_quit=Observation.component.{code:coding.{code:"quit"}}.valueCodableConcept.coding.0.code
-alcohol_behavior=Observation.valueCodableConcept.coding.0.code
-ssf=Observation.valueCodableConcept.coding.0.code
+

@@ -1,7 +1,6 @@
 import csv
 import re
 from base.exceptions import RegexUnrecognizedException
-from base.route_converter import parse_route
 from munch import DefaultMunch
 
 """
@@ -168,56 +167,10 @@ def transform_to_correct_type(input_string: str):
     return output
 
 
-class _FhirResourceRoute:
-    rule = {}
-
-    def __init__(self, route_file_path="./config/resource.route"):
-        with open(route_file_path, newline='') as route_file:
-            for line in route_file:
-                line = line.split("#")[0]
-                if "=" not in line:
-                    continue
-
-                result = self._handle_route(line.replace("\n", ""))
-                self.rule[result["condition_name"]] = result
-
-    @staticmethod
-    def _handle_route(string) -> dict:
-        route = {"condition_name": string.split("=")[0],
-                 "resource_type": string.split("=")[1].split(".")[0].capitalize(),
-                 "methods": parse_route(".".join(string.split("=")[1].split(".")[1:]))
-                 }
-        return route
-
-    def get_route_dict(self, resource_rule):
-        """
-
-        :param resource_rule: name of route
-        :return: {
-                  "condition_name": name of condition,
-                  "resource_type": "Patient",
-                  "methods": [
-                    "get_age()"
-                  ]
-                }
-        """
-        if resource_rule not in self.rule:
-            raise KeyError("Rule is not exist in the resource.route.")
-
-        return self.rule[resource_rule]
-
-    def get_rule_dict(self):
-        return self.rule.keys()
-
-
-# cds_hooks_config_table = _HooksFeature()
-# fhir_resources_route = _FhirResourceRoute()
-
 if __name__ == "__main__":
     import json
 
+    # TODO: Write test case
     cds_hooks_config_table = _HooksConfigTable("../config/cds_hooks_config.csv")
     print(json.dumps(cds_hooks_config_table.get_cds_hooks_table_dict("pima_diabetes"), indent=2))
 
-    route_table = _FhirResourceRoute("../config/resource.route")
-    print(json.dumps(route_table.get_route_dict("edge"), indent=2))

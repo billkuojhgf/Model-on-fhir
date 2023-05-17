@@ -1,6 +1,4 @@
 import reprlib
-import re
-import json
 
 
 def get_by_path(data, path, default=None):

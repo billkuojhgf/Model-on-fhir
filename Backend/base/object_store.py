@@ -1,6 +1,6 @@
 from base.fhir_search_obj import _FhirClassObject
 from base.cds_hooks_table import _HooksConfigTable
-from base.cds_hooks_table import _FhirResourceRoute
+from base.resource_route_table import _FhirResourceRoute
 from base.feature_table import _FeatureTable
 from base.transformation_table import _TransformationTable
 from base.bulk_client import BulkDataClient
