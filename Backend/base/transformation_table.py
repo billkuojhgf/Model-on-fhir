@@ -39,8 +39,7 @@ class NumericVariable(BaseVariable):
     def __init__(self, feature, observer):
         super().__init__(feature, "numeric")
         self._value = None
-        self._observer = observer
-        self._observer.attach(self)
+        observer.attach(self)
 
     def set_value(self, value):
         self._value = value
@@ -98,7 +97,9 @@ Transformation Table:
 
 
 class Operation:
-    def __init__(self, variable: BaseVariable or None, threshold, prefix: str = "eq"):
+
+    # TODO: 原先的variable可以為None, 但為什麼？
+    def __init__(self, variable: BaseVariable, threshold, prefix: str = "eq"):
         self.variable = variable
         self.prefix = prefix
         self.threshold = threshold
@@ -137,7 +138,7 @@ class FormulaVariable(BaseVariable):
     def __init__(self, feature, formula=None):
         super().__init__(feature, "formula")
         self._formula = formula
-        self.attributes = {}
+        self._attributes = {}
 
     @property
     def formula(self):
@@ -148,11 +149,11 @@ class FormulaVariable(BaseVariable):
         self._formula = formula
 
     def set_new_attr(self, name: str, variable: BaseVariable):
-        self.attributes[name] = variable
+        self._attributes[name] = variable
 
     def get_value(self):
         formula = self.formula
-        attributes = {(k, v.get_value()) for k, v in self.attributes.items()}
+        attributes = {(k, v.get_value()) for k, v in self._attributes.items()}
 
         return safeeval.values(formula, attributes)
 

@@ -111,9 +111,4 @@ class BulkDataClient(object):
         return return_data_dict
 
 
-if __name__ == "__main__":
-    print("starting...")
-    bulk_server = BulkDataClient()
-    bulk_server.provision()
-    ndj = bulk_server.iter_ndjson_dict()
-    pass
+

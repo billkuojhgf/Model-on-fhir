@@ -386,8 +386,14 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
         patient = search.get()
 
         result = None
-        if table['code'] == 'age':
+        # Patient 可以有兩種情況，一種是直接回傳Patient的資料，另一種是透過strategy去取得資料
+        # 如果Feature Table 中有code，就是取得Strategy，反之就是取Resource route 的資料
+        try:
             result = getattr(self._strategy, "get_{}".format(str(table['code']).lower()))(patient, default_time)
+        except KeyError:
+            pass
+
+
         return {
             "resource": result, "component_code": None, 'type': "Patient"
         }
@@ -553,7 +559,7 @@ def get_patient_resources_data_set(patient_id,
     return patient_data_dict_origin
 
 
-def get_resource_datetime(data: Dict, default_time: datetime) -> str | None:
+def get_resource_datetime(data: Dict, default_time: datetime) -> str or None:
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(data['type']).capitalize()]
     data_datetime = patient_resources_mgmt.get_datetime_with_resources(data, default_time)
@@ -576,14 +582,10 @@ def get_resource_datetime_and_value(data: Dict, default_time: datetime) -> (str 
 
 
 if __name__ == "__main__":
-    import os
+    from base.object_store import feature_table
 
-    os.chdir("../")
-    from feature_table import feature_table
-
-    features__table = feature_table
     patient__id = "test-03121002"
-    feature__table = features__table.get_model_feature_dict('NSTI')
+    feature__table = feature_table.get_model_feature_dict('NSTI')
     default_time = datetime.datetime.now()
 
     patient_result_dict = dict()

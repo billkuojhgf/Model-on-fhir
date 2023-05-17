@@ -10,7 +10,9 @@ get_by_path_data = [
     ({"test2": [{'a': {"b": [{"c": "test1"}]}, "result": {"number": "one"}},
                 {'a': {"b": [{"c": "test2"}]}, "result": {"number": "two"}}]},
      ["test2", {"a": ["b", {"c": 'test2'}]}, "result", 'number'], "two"),
-    ({"a": {"b": None}}, ["a", "b"], None)
+    ({"a": {"b": None}}, ["a", "b"], None),
+    ({"key": [{"test": "test0", "nkey": "zero", "skey": "zero"}, {"test": "test1", "nkey": "one", "skey": "zero"}]},
+         ["key", {"skey": "zero", "test": "test1"}, "nkey"], "one")
 ]
 
 get_by_path_data_default = [
@@ -19,13 +21,17 @@ get_by_path_data_default = [
 ]
 
 parse_route_data = [
-    ('"b".{"c":"test2"}', ['b', {'c': 'test2'}]),
-    ('"test2".{"a":"b".{"c":"test2"}}."result"."number"',
+    ('b.{c:"test2"}', ['b', {'c': 'test2'}]),
+    ('test2.{a:b.{c:"test2"}}.result.number',
      ['test2', {'a': ['b', {'c': 'test2'}]}, 'result', 'number']),
-    ('"class"."code"', ['class', 'code']),
-    ('"component"."coding".{"code": "4323-3"}."display"', ['component', 'coding', {'code': '4323-3'}, 'display']),
-    ('"component"."coding".{"code": "4323-3"}.0."display"',
-     ['component', 'coding', {'code': '4323-3'}, 0, 'display'])
+    ('class.code', ['class', 'code']),
+    ('component.coding.{code:"4323-3"}.display', ['component', 'coding', {'code': '4323-3'}, 'display']),
+    ('component.coding.{code:"4323-3"}.0.display',
+     ['component', 'coding', {'code': '4323-3'}, 0, 'display']),
+    ('component.coding.{code:"4323-3",system: "http://test.com"}.0.display',
+     ['component', 'coding', {'code': '4323-3', 'system': 'http://test.com'}, 0, 'display']),
+    ('bodySite.{coding:{system: "https://www.hpa.gov.tw/",code:"0"}}.coding.0.display',
+     ['bodySite', {'coding': {'system': 'https://www.hpa.gov.tw/', 'code': '0'}}, 'coding', 0, 'display'])
 ]
 
 
@@ -108,8 +114,8 @@ def resource():
 
 
 @pytest.mark.parametrize("route, expected_output", [
-    ('"bodySite".{"coding":{"system": "https://www.hpa.gov.tw/","code":"0"}}."coding".0."display"', "原發部位手術邊緣"),
-    ('"bodySite".{"coding":{"system": "https://www.hpa.gov.tw/","code":"999"}}."coding".0."display"',
+    ('bodySite.{coding:{system: "https://www.hpa.gov.tw/",code:"0"}}.coding.0.display', "原發部位手術邊緣"),
+    ('bodySite.{coding:{system: "https://www.hpa.gov.tw/",code:"999"}}.coding.0.display',
      "原發部位手術切緣距離"),
 ])
 def test_regression(resource, route, expected_output):

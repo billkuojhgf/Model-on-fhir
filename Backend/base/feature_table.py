@@ -41,7 +41,8 @@ class _FeatureTable:
                     temp_table['code'] = code
 
                 # 取得距今多久以內的資料
-                temp_table['data_alive_time'] = DataAliveTime(row['data_alive_time'])
+                temp_table['data_alive_time'] = DataAliveTime(row['data_alive_time']) if row['data_alive_time'] != '' \
+                    else None
 
                 temp_table['default_value'] = None if row['default_value'] == '' \
                     else transform_to_correct_type(row['default_value'])
