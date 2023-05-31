@@ -12,7 +12,7 @@ from base.object_store import fhir_resources_route
 from dateutil.relativedelta import relativedelta
 from typing import Dict, Any
 from fhirpy.base.searchset import FHIR_DATE_FORMAT
-from fhirpy.base.searchset import datetime
+from datetime import datetime
 from fhirpy.lib import SyncFHIRResource
 
 from base.route_converter import get_by_path
@@ -88,6 +88,13 @@ class GetFuncInterface(ABC):
 
     @abstractmethod
     def execute(self, data: dict) -> dict:
+        """
+        GetFuncInterface 的目的是根據設定(Max, Min, Latest)取得想要的「單筆」資料。
+        :param data: dictionary type, 裡面有兩個key: date, value。
+                     date的value是一個list，裡面有多個日期；value的value也是一個list，裡面有多個數值。
+        :return: dictionary type, 裡面有兩個key: date, value。
+                    date的value是一個string，裡面是一個日期；value的value可以是任意的型態，裡面是一個數值
+        """
         pass
 
 
@@ -131,6 +138,12 @@ class GetLatest(GetFuncInterface):
         """
         data_date_list = data['date']
         data_value_list = data['value']
+
+        if len(data_date_list) == 0:
+            data_date_list.append(None)
+
+        if len(data_value_list) == 0:
+            data_value_list.append(None)
 
         return {"date": data_date_list[0], "value": data_value_list[0]}
 
@@ -287,7 +300,7 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
     def search(self,
                patient_id: str,
                table: dict,
-               default_time: datetime = datetime.datetime.now(),
+               default_time: datetime = datetime.now(),
                data_alive_time=None) -> Dict:
         default_value = table['default_value']
 
@@ -337,7 +350,7 @@ class Observation(ResourcesInterface, GetValueAndDatetimeInterface):
     def get_datetime(self,
                      resource,
                      route,
-                     default_time: datetime = datetime.datetime.now()) -> str | None:
+                     default_time: datetime = datetime.now()) -> str | None:
         # 很可能是Default的值，或者資料庫根本找不到
         if type(resource) is not dict and type(resource) is not SyncFHIRResource:
             return None
@@ -451,7 +464,7 @@ class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
     def search(self,
                patient_id: str,
                table: dict,
-               default_time: datetime = datetime.datetime.now(),
+               default_time: datetime = datetime.now(),
                data_alive_time=None) -> Dict:
         params = {
             'subject': patient_id,
@@ -470,7 +483,7 @@ class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
         # Consider: 我有需要回傳整個result list嗎？還是只要回傳一個就好？有什麼情況需要我回傳整個list？計算染疫次數嗎？
         return {'resource': [None] if len(results) == 0 else results, 'type': 'Condition'}
 
-    def get_datetime(self, resource, route, default_time: datetime = datetime.datetime.now()) -> str | None:
+    def get_datetime(self, resource, route, default_time: datetime = datetime.now()) -> str | None:
         route_list = []
         if route is None:
             route_list.append(fhir_resources_route.get_route("condition_datetime"))
@@ -485,7 +498,7 @@ class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
         return None
 
     def get_value(self, resource, route: list or None) -> bool or Any:
-        if type(resource) is None:
+        if resource is None:
             return False
 
         route_list = []
@@ -506,7 +519,7 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
     def search(self,
                patient_id: str,
                table: dict,
-               default_time: datetime = datetime.datetime.now(),
+               default_time: datetime = datetime.now(),
                data_alive_time=None) -> Dict:
         resources = CLIENT.resources('Patient')
         search = resources.search(_id=patient_id).limit(1)
@@ -517,8 +530,8 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
         }
 
     @staticmethod
-    def get_age(resource: dict or SyncFHIRResource, default_time: datetime = datetime.datetime.now()) -> int:
-        patient_birthdate = datetime.datetime.strptime(
+    def get_age(resource: dict or SyncFHIRResource, default_time: datetime = datetime.now()) -> int:
+        patient_birthdate = datetime.strptime(
             resource.birthDate, FHIR_DATE_FORMAT)
         # If we need to calculate the real age that is 1 year before or so (depends on the default_time)
         # , then calculate it by minus method.
@@ -528,7 +541,7 @@ class Patient(ResourcesInterface, GetValueAndDatetimeInterface):
     def get_datetime(self,
                      resource,
                      route,
-                     default_time: datetime = datetime.datetime.now()) -> str | None:
+                     default_time: datetime = datetime.now()) -> str | None:
         """
 
         :param resource:
@@ -610,7 +623,7 @@ def get_patient_resources_data_set(patient_id,
     return patient_data_dict_origin
 
 
-def get_resource_datetime(data: Dict, table: Dict, default_time: datetime) -> str or None:
+def get_resource_datetime(data: Dict, table: Dict, default_time: datetime = datetime.now()) -> str or None:
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(data['type']).capitalize()]
     data_datetime = patient_resources_mgmt.get_datetime_with_resources(data["resource"],
@@ -620,8 +633,8 @@ def get_resource_datetime(data: Dict, table: Dict, default_time: datetime) -> st
 
 
 def get_resource_value(data: Dict, table: Dict) -> int or float or str or bool:
-    if type(data["resource"]) is not dict and type(data["resource"]) is not SyncFHIRResource:
-        return data["resource"]
+    # if type(data["resource"]) is not dict and type(data["resource"]) is not SyncFHIRResource:
+    #     return data["resource"]
 
     patient_resources_mgmt = ResourceMgmt()
     patient_resources_mgmt.strategy = globals()[str(data['type']).capitalize()]

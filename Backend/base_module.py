@@ -3,6 +3,7 @@ import importlib
 from mocab_models import *
 from base.model_input_transformer import transformer
 from base.object_store import feature_table
+from base.object_store import model_feature_table
 
 table = feature_table
 
@@ -30,7 +31,7 @@ def return_model_result(patient_data_dict, api):
     """
 
     # transfer patient data into model preferred input
-    patient_data_list = transformer(patient_data_dict, api)
+    patient_data_list = transformer(model_feature_table, patient_data_dict, api)
     model_results = globals()[api].predict(patient_data_list)
     return model_results
 

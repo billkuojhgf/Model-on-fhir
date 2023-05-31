@@ -1,7 +1,7 @@
-from base.object_store import model_feature_table
+from base.lib import transform_to_correct_type
 
 
-def transformer(data: dict, model_name):
+def transformer(model_feature_table, data: dict, model_name):
     real_dict = model_feature_table.get_model_feature_dict(model_name)
     for k, v in data.items():
         try:
@@ -16,7 +16,9 @@ def transformer(data: dict, model_name):
         for variable in element:
             try:
                 if variable.get_value() is not None:
-                    return_list.append(variable.get_value())
+                    value = variable.get_value()
+                    value = transform_to_correct_type(value)
+                    return_list.append(value)
                     has_value = True
                     break
             except TypeError:
@@ -27,4 +29,3 @@ def transformer(data: dict, model_name):
             # TODO: add maybe an Nonetype of Nan to the list if there's no value in the variable
 
     return return_list
-

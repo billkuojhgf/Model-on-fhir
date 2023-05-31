@@ -12,7 +12,7 @@ class _FhirResourceRoute:
                     continue
 
                 result = self._handle_route(line.replace("\n", ""))
-                if result["condition_name"] in self.rule:
+                if result["condition_name"] in self.rule.keys():
                     raise KeyError("Duplicate rule name in the resource.route.")
                 self.rule[result["condition_name"]] = result
 

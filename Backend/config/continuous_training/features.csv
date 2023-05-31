@@ -1,0 +1,3 @@
+model,feature,code,code_system,type_of_data,data_alive_time,default_value,search_type,value_route,datetime_route
+SPC,seq_1,01,https://mitw.dicom.org.tw/IG/TWCR/CodeSystem/sequence-number-codesystem,condition,,,latest,,
+SPC,seq_2,02,https://mitw.dicom.org.tw/IG/TWCR/CodeSystem/sequence-number-codesystem,condition,,,latest,,

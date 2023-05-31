@@ -9,6 +9,7 @@ blood_pressure_diastolic=Observation.component.{code:coding.{code:"8462-4"}}.val
 encounter_type=Encounter.class.code
 gender=Patient.gender
 age=Patient.get_age()
+age_of_condition_onset=Condition.onsetAge.value
 margin_of_surgery=Procedure.bodySite.0.coding.0.code
 grade=Observation.valueCodeableConcept.coding.0.code
 tumor_size_quantity=Observation.component.0.valueQuantity.value

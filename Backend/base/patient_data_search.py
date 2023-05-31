@@ -49,7 +49,7 @@ def smart_model_feature_search_with_patient_id(patient_id: str,
     result_dict = dict()
     for key in data:
         result_dict[key] = dict()
-        result_dict[key] = extract_data_in_data_sets(data[key], default_time, table[key])
+        result_dict[key] = extract_data_in_data_sets(data[key], table[key], default_time)
 
     # smart_model_feature_search_with_patient_id will return datetime and value in dictionary type
     # e.g.:{
@@ -61,7 +61,7 @@ def smart_model_feature_search_with_patient_id(patient_id: str,
     return result_dict
 
 
-def extract_data_in_data_sets(data_sets, default_time, table) -> dict:
+def extract_data_in_data_sets(data_sets, table, default_time=datetime.datetime.now()) -> dict:
     """
     This function will extract the data in data_sets and return a dictionary
     :param data_sets:
