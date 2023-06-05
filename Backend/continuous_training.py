@@ -1,4 +1,5 @@
 import pandas as pd
+from flask import Blueprint, jsonify
 from requests import HTTPError
 from base_module import encode_model_data_set
 from base_module import train_model
@@ -24,12 +25,19 @@ from base.object_store import \
     model_feature_table, \
     training_model_feature_table
 
+ct_app = Blueprint('con_train', __name__)
 
-def main_process(model_name):
+
+@ct_app.route("/<api>", methods=['GET'])
+def continuous_training_process(api):
+    return jsonify(training_process(api))
+
+
+def training_process(model_name):
     training_sets = training_sets_table.get_training_set(model_name)
     # Add exception for error 404
     try:
-        bulk_server.content = "http://ming-desktop.ddns.net:8193/fhir/$export-poll-status?_jobId=dce651f6-7630-466a-9a1b-41b70df022d4"
+        bulk_server.content = "http://ming-desktop.ddns.net:8193/fhir/$export-poll-status?_jobId=6aef7bee-d4c3-4a21-bfd8-ad99f042bad6"
         bulk_server.provision()
     except HTTPError:
         print("Connection error. Trying to generate a new bulk request")
@@ -76,6 +84,7 @@ def main_process(model_name):
     column = model_feature_table.get_model_feature_column(model_name) \
              + training_model_feature_table.get_model_feature_column(model_name)
     df = pd.DataFrame.from_dict(transformed_training_data, orient="index")
+    print("Numbers of exported patients: ", len(df.index))
     df.columns = column
 
     # First is to drop the rows that matches the condition we've set in the training_sets_table.
@@ -117,6 +126,6 @@ def main_process(model_name):
 
 if __name__ == "__main__":
     print("starting...")
-    main_process("SPC")
+    training_process("SPC")
     print("ending...")
     pass

@@ -6,10 +6,12 @@ from flask_cors import CORS
 
 from cds_hooks import cds_app
 from smart_on_fhir import smart_app
+from continuous_training import ct_app
 
 mocab_app = Flask(__name__)
 mocab_app.register_blueprint(smart_app, url_prefix='/smart')
 mocab_app.register_blueprint(cds_app.server, url_prefix='/cds-hooks')
+mocab_app.register_blueprint(ct_app, url_prefix='/ct')
 CORS(mocab_app)
 
 from base_module import return_model_result

@@ -29,6 +29,10 @@ def encode(x_train, x_test, y_train, y_test, base_path):
         enc = OneHotEncoder(drop='first').fit(df_x.astype(str))
         dump(enc, f'{base_path}/encoder.joblib')
 
+    column_enc = list(enc.feature_names_in_)
+    x_train = x_train.reindex(columns=column_enc)
+    x_test = x_test.reindex(columns=column_enc)
+
     x_train = enc.transform(x_train.astype(str))
     x_test = enc.transform(x_test.astype(str))
     x_train = pd.DataFrame(x_train.toarray(), columns=enc.get_feature_names())
