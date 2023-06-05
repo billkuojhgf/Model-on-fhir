@@ -98,7 +98,7 @@ SPC,margin_of_surgery,category,2=B,6
 SPC,margin_of_surgery,category,2=C,6
 SPC,margin_of_surgery,category,1=0,6
 SPC,margin_of_surgery,category,2=gt|0&lt|7,6
-SPC,margin_of_surgery,category,3=ge|7&le|9,6
+SPC,margin_of_surgery,category,9=ge|7&le|9,6
 SPC,margin_of_surgery,category,none=[default],6
 SPC,height,numeric,,
 SPC,weight,numeric,,

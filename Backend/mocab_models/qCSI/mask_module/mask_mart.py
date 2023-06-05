@@ -48,7 +48,6 @@ class ConcreteMaskMart(MaskMart):
     """
 
     def attach(self, observer: MaskType, index: int = 0) -> None:
-        print("Subject: Attached an observer.")
         if observer in self._types:
             print('Observer was already attached.')
         elif index > 0 and (index - 1) < len(self._types):

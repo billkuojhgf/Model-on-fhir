@@ -1,4 +1,8 @@
 import importlib
+import os
+import shutil
+
+import pandas as pd
 
 from mocab_models import *
 from base.model_input_transformer import transformer
@@ -32,8 +36,55 @@ def return_model_result(patient_data_dict, api):
 
     # transfer patient data into model preferred input
     patient_data_list = transformer(model_feature_table, patient_data_dict, api)
-    model_results = globals()[api].predict(patient_data_list)
+    return get_model_result(patient_data_list, api)
+
+
+def get_model_result(patient_data_list, api):
+    base_path = f"./mocab_models/{api}"
+    model_results = globals()[api].predict(patient_data_list, base_path)
     return model_results
+
+
+def encode_model_data_set(x_train, x_test, y_train, y_test, api) -> (
+        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    base_path = f"./mocab_models/{api}"
+    x_train, x_test, y_train, y_test = globals()[api].encode(x_train, x_test, y_train, y_test, base_path)
+    return x_train, x_test, y_train, y_test
+
+
+def train_model(x_train, y_train, api):
+    base_path = f"./mocab_models/{api}"
+    return globals()[api].train(x_train, y_train, base_path)
+
+
+def get_machine_learning_model(model_type, api):
+    base_path = f"./mocab_models/{api}"
+    return globals()[api].get_model(model_type, base_path)
+
+
+def choose_model(api, choosed_model):
+    prev_model = "register_model"
+    new_model = "new_model"
+    base_path = f"./mocab_models/{api}/"
+    if not os.path.exists(base_path + prev_model):
+        raise FileNotFoundError("Registered Model not found")
+
+    if not os.path.exists(base_path + new_model):
+        raise FileNotFoundError("New Model not found")
+
+    if choosed_model == "new":
+        print("New Model is chosen.")
+        if os.path.isfile(base_path + prev_model):
+            os.remove(base_path + prev_model)
+        elif os.path.isdir(base_path + prev_model):
+            shutil.rmtree(base_path + prev_model)
+        os.rename(base_path + new_model, base_path + prev_model)
+    elif choosed_model == "register":
+        print("Registered Model is chosen.")
+        if os.path.isfile(base_path + new_model):
+            os.remove(base_path + new_model)
+        elif os.path.isdir(base_path + new_model):
+            shutil.rmtree(base_path + new_model)
 
 
 def import_model():

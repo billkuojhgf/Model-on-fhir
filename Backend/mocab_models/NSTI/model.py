@@ -1,10 +1,11 @@
 import joblib
 
 
-def predict(data: list):
+def predict(data: list, base_path):
     """
 
-    :param data:
+    :param base_path:
+    :param data: list
             sea: Category. Whether the patient has contacted seawater or raw seafood, 0 or 1.
             wbc: Value. White Blood Cell. Normally between 4000-11000/mm3.
             crp: Value. C-Reactive Protein. Normally under 0.8mg/dL
@@ -16,7 +17,7 @@ def predict(data: list):
     x = list()
     temp = data
     # Fixme: 路徑問題，待解決
-    loaded_model = joblib.load("./mocab_models/NSTI/LR_model_NSTI_5fea")
+    loaded_model = joblib.load(f"{base_path}/register_model")
     x.append(temp)
     result = loaded_model.predict_proba(x)
     return result[:, 1][0]

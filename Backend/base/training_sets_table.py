@@ -15,13 +15,11 @@ class _TrainingSet:
                  data_filter: list,
                  duration: TimeObject,
                  null_value_strategy: dict,
-                 weight: float,
-                 validate_method: str):
+                 training_config: dict):
         self.data_filter = data_filter
         self.duration = duration
         self.null_value_strategy = null_value_strategy
-        self.weight = weight
-        self.validate_method = validate_method
+        self.training_config = training_config
 
 
 class FilterOperation:
@@ -86,17 +84,23 @@ class _TrainingSetTable:
             rows = csv.DictReader(training_sets_table)
 
             for row in rows:
+                special_columns = ["models", "filter", "duration", "null_value_strategy", "threshold"]
                 data_filter = self.data_filter_handler(row["filter"])
                 duration = TimeObject(row["duration"])
                 null_value_strategy = self.null_value_strategy_handler(row["null_value_strategy"])
-                try:
-                    weight = float(row["weight"])
-                except ValueError:
-                    raise ValueError(f"weight must be a float. Error: {row['weight']}")
-                validate_method = row["validate_method"]
+                training_configs = dict()
+
+                if row['threshold'] is None:
+                    training_configs['threshold'] = 0.5
+                else:
+                    training_configs['threshold'] = float(row['threshold'])
+
+                for key, value in row.items():
+                    if key not in special_columns:
+                        training_configs[key] = value
 
                 return_dict[row["models"]] = \
-                    _TrainingSet(data_filter, duration, null_value_strategy, weight, validate_method)
+                    _TrainingSet(data_filter, duration, null_value_strategy, training_configs)
 
             return return_dict
 

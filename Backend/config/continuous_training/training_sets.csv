@@ -1,2 +1,2 @@
-models,filter,duration,null_value_strategy,weight,validate_method
-SPC,(date)lt|[seq_2]&(date)ge|[seq_1]&(date)ge|2018-01-01,0001-00-00T00:00:00,(drop)gt|3&(median),2.5,auroc
+models,filter,duration,null_value_strategy,test_size,random_seed,validate_method,threshold
+SPC,(date)lt|[seq_2]&(date)ge|[seq_1]&(date)ge|2017-01-01,0001-00-00T00:00:00,(drop)gt|3&(median),0.2,87,auroc,0.4

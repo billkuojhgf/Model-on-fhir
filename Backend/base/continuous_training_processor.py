@@ -1,16 +1,15 @@
 import numpy as np
 import pandas as pd
+import copy
 from datetime import date, datetime
-from requests.exceptions import HTTPError
+
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+from sklearn.model_selection import train_test_split
 
 from base.exceptions import ThresholdNoneError
 from base.exceptions import VariableNoneError
-from base.object_store import bulk_server
 from base.object_store import feature_table
-from base.object_store import model_feature_table
 from base.object_store import training_feature_table
-from base.object_store import training_model_feature_table
-from base.object_store import training_sets_table
 from base.route_converter import get_by_path
 from base.patient_data_search import extract_data_in_data_sets
 from base.search_sets import get_datetime_value_with_func
@@ -225,16 +224,17 @@ def resources_filter(value_and_datetime_of_patients, feature_table, filter_list)
     """
     Filter the resources by the filter list.
     :param value_and_datetime_of_patients:
-    :param filter_list:
+    :param temp_filter_list:
     :return:
     """
     return_data = {}
     for patient_id, value_and_datetime_of_patient in value_and_datetime_of_patients.items():
+        temp_filter_list = copy.deepcopy(filter_list)
         patient_separated_data = {}
         # First is to get the datetime and value of the filtered features
         # filtered_features =
         value_and_datetime_for_threshold_feature = {}
-        for obj in filter_list:
+        for obj in temp_filter_list:
             threshold = str(obj.threshold)
             if threshold.startswith("[") and threshold.endswith("]"):
                 # keep the value inside []
@@ -253,7 +253,7 @@ def resources_filter(value_and_datetime_of_patients, feature_table, filter_list)
 
         for feature_name, value_and_datetime_of_features in value_and_datetime_of_patient.items():
             patient_separated_data[feature_name] = \
-                filter_data_in_data_sets(value_and_datetime_of_features, filter_list)
+                filter_data_in_data_sets(value_and_datetime_of_features, temp_filter_list)
 
         patient_separated_data = patient_separated_data | value_and_datetime_for_threshold_feature
 
@@ -268,24 +268,14 @@ def resources_filter(value_and_datetime_of_patients, feature_table, filter_list)
     return return_data
 
 
-def null_value_stategy(df: pd.DataFrame, null_value_strategy: dict) -> pd.DataFrame:
+def imputation_stategy(df: pd.DataFrame, null_value_strategy: dict) -> pd.DataFrame:
     """
     Fill the null value in the dataframe with the strategy defined in the null_value_strategy.
     :param df:
     :param null_value_strategy:
     :return:
     """
-    # Drop the rows with too many null values
-    return_df = df
-    drop_prefix = null_value_strategy["drop"]["prefix"]
-    drop_threshold = int(null_value_strategy["drop"]["threshold"])
-    if drop_prefix == "ge":
-        return_df = return_df[return_df.isnull().sum(axis=1) < drop_threshold]
-    elif drop_prefix == "gt":
-        return_df = return_df[return_df.isnull().sum(axis=1) <= drop_threshold]
-    else:
-        raise ValueError("The prefix of drop is not supported.")
-
+    return_df = df.copy()
     # Fill the null value with the strategy defined in the null_value_strategy
     del null_value_strategy["drop"]
 
@@ -348,7 +338,7 @@ def merge_transformed_data(x_data_dict, y_data_dict) -> dict:
     """
     return_dict = x_data_dict
     for patient_id, y_data in y_data_dict.items():
-        if not all(y_data):
+        if all([y is None for y in y_data]):
             del return_dict[patient_id]
         else:
             return_dict[patient_id] = return_dict[patient_id] + y_data
@@ -356,60 +346,105 @@ def merge_transformed_data(x_data_dict, y_data_dict) -> dict:
     return return_dict
 
 
-def main_process(model_name):
-    # # Add exception for error 404
-    # try:
-    #     bulk_server.content = "http://ming-desktop.ddns.net:8193/fhir/$export-poll-status?_jobId=c0816f00-576b-4e4a-9e51-18d358b41bd3"
-    #     bulk_server.provision()
-    # except HTTPError:
-    #     print("Connection error. Trying to generate a new bulk request")
-    #     bulk_server.content = None
-    #     bulk_server.provision()
-    #     print(bulk_server.content)
-    #
-    # ndj = bulk_server.iter_ndjson_dict()
-    # code_dict = combine_training_and_predicting_feature_table(model_name)
-    # data_with_separated_patient = separate_patients(ndj)
-    # data_with_separated_patient = allocate_feature_resources(data_with_separated_patient, code_dict)
-    #
-    # # Extract the value and datetime from the resources.
-    # predict_and_training_feature_tables = \
-    #     feature_table.get_model_feature_dict(model_name) | training_feature_table.get_model_feature_dict(model_name)
-    # value_and_datetime_of_patients = extract_value_and_datetime(
-    #     data_with_separated_patient, predict_and_training_feature_tables)
-    #
-    # # Drop the resources that are not needed.
-    # value_and_datetime_of_patients_after_filter = resources_filter(
-    #     value_and_datetime_of_patients,
-    #     predict_and_training_feature_tables,
-    #     training_sets_table.get_training_set(model_name).data_filter
-    # )
-    #
-    # # translate the value from the value_and_datetime_of_patients_after_filter
-    # transformed_x_data_of_patients = transform_data(model_feature_table,
-    #                                                 value_and_datetime_of_patients_after_filter,
-    #                                                 model_name)
-    # transformed_y_data_of_patients = transform_data(training_model_feature_table,
-    #                                                 value_and_datetime_of_patients_after_filter,
-    #                                                 model_name)
-    #
-    # transformed_training_data = merge_transformed_data(transformed_x_data_of_patients,
-    #                                                    transformed_y_data_of_patients)
-    #
-    # # Time for some dataframe works
-    # column = model_feature_table.get_model_feature_column(model_name) \
-    #             + training_model_feature_table.get_model_feature_column(model_name)
-    # df = pd.DataFrame.from_dict(transformed_training_data, orient="index")
-    # df.columns = column
-    # df.to_csv("test.csv")
+def split_data(df, training_config, y_columns: list) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    """
+    Split the data into training set and testing set.
+    :param df:
+    :param training_config:
+    :param y_columns:
+    :return:
+    """
+    # Split the data into training set and testing set
+    if len(y_columns) > 1:
+        raise ValueError("The number of y columns is more than 1, which is not supported now.")
+    y_col = y_columns[0]
+    size = float(training_config['test_size'])
+    seed = int(training_config['random_seed'])
 
-    df = pd.read_csv("test.csv", index_col=0)
-    df_new = null_value_stategy(df, training_sets_table.get_training_set(model_name).null_value_strategy)
-    pass
+    train = pd.DataFrame()
+    test = pd.DataFrame()
+    trainset, testset = train_test_split(df, test_size=size, stratify=df[y_col],
+                                         random_state=seed)
+    train = pd.concat([train, trainset])
+    x_train, y_train = train.drop(y_col, axis=1), train[y_col]
+    test = pd.concat([test, testset])
+    x_test, y_test = test.drop(y_col, axis=1), test[y_col]
+
+    return x_train, x_test, y_train, y_test
 
 
-if __name__ == "__main__":
-    print("starting...")
-    main_process("SPC")
-    print("ending...")
-    pass
+def drop_unuseful_rows(df, null_value_strategy):
+    # Drop the rows with too many null values
+    return_df = df
+    drop_prefix = null_value_strategy["prefix"]
+    drop_threshold = int(null_value_strategy["threshold"])
+    if drop_prefix == "ge":
+        return_df = return_df[return_df.isnull().sum(axis=1) < drop_threshold]
+    elif drop_prefix == "gt":
+        return_df = return_df[return_df.isnull().sum(axis=1) <= drop_threshold]
+    else:
+        raise ValueError("The prefix of drop is not supported.")
+
+    return return_df
+
+
+def model_evaluation(register_model, new_model, x_test, y_test, threshold=0.5) -> dict:
+    """
+    Evaluate the performance of the model.
+    :param register_model:
+    :param new_model:
+    :param x_test:
+    :param y_test:
+    :return: {
+        "accuracy": {
+            "register_model": 0.9,
+            "new_model": 0.8
+        },...
+    }
+
+    """
+    return_dict = {}
+
+    # Only worked while using tensorflow as the ML framework.
+    # TODO: Need some changes.
+    y_prev_pred = register_model.predict(x_test)
+    y_new_pred = new_model.predict(x_test)
+
+    reg_validate_result = evaluating(y_prev_pred, y_test, threshold=threshold)
+    new_validate_result = evaluating(y_new_pred, y_test, threshold=threshold)
+
+    for key in reg_validate_result.keys():
+        return_dict[key] = {
+            "register_model": reg_validate_result[key],
+            "new_model": new_validate_result[key]
+        }
+
+    return return_dict
+
+
+def evaluating(y_perd, y_actual, threshold=0.5):
+    """
+    Evaluate the performance of the model.
+    :param y_perd:
+    :param y_actual:
+    :return:
+    """
+    return_dict = {}
+    # Calculate the auroc
+    return_dict['auroc'] = roc_auc_score(y_actual, y_perd)
+    # Flatten the y_perd while it's a 2d array
+    if len(y_perd.shape) > 1:
+        y_perd_flat = y_perd.flatten()
+        y_perd_flat = [1 if y >= threshold else 0 for y in y_perd_flat]
+    else:
+        y_perd_flat = [1 if y >= threshold else 0 for y in y_perd]
+    # Calculate the accuracy
+    return_dict['accuracy'] = accuracy_score(y_actual, y_perd_flat)
+    # Calculate the precision
+    return_dict['precision'] = precision_score(y_actual, y_perd_flat)
+    # Calculate the recall
+    return_dict['recall'] = recall_score(y_actual, y_perd_flat)
+    # Calculate the f1 score
+    return_dict['f1_score'] = f1_score(y_actual, y_perd_flat)
+
+    return return_dict
