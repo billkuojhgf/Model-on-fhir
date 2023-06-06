@@ -3,7 +3,7 @@ import pandas as pd
 import copy
 from datetime import date, datetime
 
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve
 from sklearn.model_selection import train_test_split
 
 from base.exceptions import ThresholdNoneError
@@ -359,7 +359,7 @@ def split_data(df, training_config, y_columns: list) -> (pd.DataFrame, pd.DataFr
         raise ValueError("The number of y columns is more than 1, which is not supported now.")
     y_col = y_columns[0]
     size = float(training_config['test_size'])
-    seed = int(training_config['random_seed'])
+    seed = 87
 
     train = pd.DataFrame()
     test = pd.DataFrame()
@@ -410,8 +410,8 @@ def model_evaluation(register_model, new_model, x_test, y_test, threshold=0.5) -
     y_prev_pred = register_model.predict(x_test)
     y_new_pred = new_model.predict(x_test)
 
-    reg_validate_result = evaluating(y_prev_pred, y_test, threshold=threshold)
-    new_validate_result = evaluating(y_new_pred, y_test, threshold=threshold)
+    reg_validate_result = evaluating(y_prev_pred, y_test)
+    new_validate_result = evaluating(y_new_pred, y_test)
 
     for key in reg_validate_result.keys():
         return_dict[key] = {
@@ -422,7 +422,7 @@ def model_evaluation(register_model, new_model, x_test, y_test, threshold=0.5) -
     return return_dict
 
 
-def evaluating(y_perd, y_actual, threshold=0.5):
+def evaluating(y_perd, y_actual):
     """
     Evaluate the performance of the model.
     :param y_perd:
@@ -430,14 +430,20 @@ def evaluating(y_perd, y_actual, threshold=0.5):
     :return:
     """
     return_dict = {}
+    # Find the best threshold
+    fpr, tpr, thresholds = roc_curve(y_actual, y_perd)
+    # Calculate the best threshold
+    best_threshold = thresholds[np.argmax(tpr - fpr)]
+    print("The best threshold is: ", best_threshold)
+
     # Calculate the auroc
     return_dict['auroc'] = roc_auc_score(y_actual, y_perd)
     # Flatten the y_perd while it's a 2d array
     if len(y_perd.shape) > 1:
         y_perd_flat = y_perd.flatten()
-        y_perd_flat = [1 if y >= threshold else 0 for y in y_perd_flat]
+        y_perd_flat = [1 if y >= best_threshold else 0 for y in y_perd_flat]
     else:
-        y_perd_flat = [1 if y >= threshold else 0 for y in y_perd]
+        y_perd_flat = [1 if y >= best_threshold else 0 for y in y_perd]
     # Calculate the accuracy
     return_dict['accuracy'] = accuracy_score(y_actual, y_perd_flat)
     # Calculate the precision

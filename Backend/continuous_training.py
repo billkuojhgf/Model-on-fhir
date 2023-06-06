@@ -37,7 +37,7 @@ def training_process(model_name):
     training_sets = training_sets_table.get_training_set(model_name)
     # Add exception for error 404
     try:
-        bulk_server.content = "http://ming-desktop.ddns.net:8193/fhir/$export-poll-status?_jobId=6aef7bee-d4c3-4a21-bfd8-ad99f042bad6"
+        bulk_server.content = "http://ming-desktop.ddns.net:8193/fhir/$export-poll-status?_jobId=0b1df8ec-0139-4017-aeb8-bdc8fe834b18"
         bulk_server.provision()
     except HTTPError:
         print("Connection error. Trying to generate a new bulk request")
@@ -108,19 +108,18 @@ def training_process(model_name):
     # Evaluate the model
     register_model = get_machine_learning_model("register", model_name)
     new_model = get_machine_learning_model("new", model_name)
-    threshold = training_sets.training_config["threshold"]
-    evaluate = model_evaluation(register_model, new_model, x_test_encoded, y_test_encoded, threshold)
+    evaluate = model_evaluation(register_model, new_model, x_test_encoded, y_test_encoded)
 
     # Save the model
     validate_method = training_sets.training_config["validate_method"]
     evaluate_result = evaluate[validate_method]
 
+    print("The evaluation result is: ", evaluate)
+
     if evaluate_result['register_model'] > evaluate_result['new_model']:
         choose_model(model_name, "register")
     else:
         choose_model(model_name, "new")
-
-    print("The evaluation result is: ", evaluate)
     pass
 
 

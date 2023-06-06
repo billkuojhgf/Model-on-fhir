@@ -84,16 +84,11 @@ class _TrainingSetTable:
             rows = csv.DictReader(training_sets_table)
 
             for row in rows:
-                special_columns = ["models", "filter", "duration", "null_value_strategy", "threshold"]
+                special_columns = ["models", "filter", "duration", "null_value_strategy"]
                 data_filter = self.data_filter_handler(row["filter"])
                 duration = TimeObject(row["duration"])
                 null_value_strategy = self.null_value_strategy_handler(row["null_value_strategy"])
                 training_configs = dict()
-
-                if row['threshold'] is None:
-                    training_configs['threshold'] = 0.5
-                else:
-                    training_configs['threshold'] = float(row['threshold'])
 
                 for key, value in row.items():
                     if key not in special_columns:
