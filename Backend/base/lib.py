@@ -1,8 +1,11 @@
 import operator
 import re
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 import numpy as np
+
+from base.exceptions import ThresholdNoneError, VariableNoneError
 
 
 def transform_to_correct_type(input_string: str, special_type="value"):
@@ -58,7 +61,8 @@ def datetime_handler(date_string: str or datetime):
             except ValueError:
                 continue
 
-    raise ValueError("The datetime string is not in correct format.")
+    raise ValueError(
+        "The datetime string is not in correct format. Got: " + date_string)
 
 
 class TimeObject:
@@ -74,7 +78,8 @@ class TimeObject:
     def __set_data_alive_time(self, data_alive_time):
         datetime_prog = re.compile(
             r"[0-9]{4}-(0[0-9]|1[12])-([12][0-9]|3[01]|0[0-9])T(20|21|22|23|[0-1]\d):[0-5]\d:[0-5]\d")
-        date_prog = re.compile(r"[0-9]{4}-(0[0-9]|1[12])-([12][0-9]|3[01]|0[0-9])")
+        date_prog = re.compile(
+            r"[0-9]{4}-(0[0-9]|1[12])-([12][0-9]|3[01]|0[0-9])")
         if datetime_prog.search(data_alive_time):
             date, time = data_alive_time.split(
                 'T')[0], data_alive_time.split('T')[1]
@@ -110,6 +115,11 @@ class TimeObject:
     def get_seconds(self):
         return self._seconds
 
+    def get_days_from_now(self):
+        future_date = datetime.now() + relativedelta(years=self._years, months=self._months,
+                                                     days=self._days, hours=self._hours, minutes=self._minutes, seconds=self._seconds)
+        return (future_date - datetime.now()).days
+
     def return_datetime(self) -> datetime:
         return datetime(self._years, self._months, self._days, self._hours, self._minutes, self._seconds)
 
@@ -141,7 +151,8 @@ class Operation:
             elif prefix == "ne":
                 prefix = "is_not"
             else:
-                raise ValueError(f"prefix {prefix} is not valid for nan threshold.")
+                raise ValueError(
+                    f"prefix {prefix} is not valid for nan threshold.")
 
         self.variable = variable
         self.prefix = prefix
@@ -159,3 +170,54 @@ class Operation:
             return getattr(operator, self.prefix)(transform_to_correct_type(var), transform_to_correct_type(thres))
         except KeyError:
             raise AttributeError(f"{self.prefix} is not a valid operator.")
+
+
+class FilterOperation:
+
+    # TODO: 原先的variable可以為None, 但為什麼？
+    def __init__(self, threshold, prefix: str = "eq", type: str = "value"):
+        # Doesn't support nan threshold.
+        # Reason: nan is not a valid filter while training. (Or maybe is?)
+        self.prefix = prefix
+        self.type = type
+        self._threshold = threshold
+
+    @property
+    def threshold(self):
+        return self._threshold
+
+    @threshold.setter
+    def threshold(self, value):
+        if value == "nan":
+            raise ValueError(f"nan is not a valid threshold.")
+        else:
+            self._threshold = value
+
+    def validate(self, variable):
+        if type(variable) == BaseVariable:
+            var = variable.get_value()
+        else:
+            var = variable
+
+        if type(self._threshold) == BaseVariable:
+            thres = self._threshold.get_value()
+        else:
+            thres = self._threshold
+
+        # Transfer to correct type
+        thres = transform_to_correct_type(thres, self.type)
+        var = transform_to_correct_type(var, self.type)
+
+        # 目前想下來，當比較單位為時間，則threshold必須為datetime，否則回傳錯誤
+        if thres is None:
+            raise ThresholdNoneError(f"Threshold is None on {self.type} type.")
+
+        if var is None:
+            raise VariableNoneError(f"Variable is None on {self.type} type.")
+
+        try:
+            return getattr(operator, self.prefix)(var, thres)
+        except KeyError:
+            raise AttributeError(f"{self.prefix} is not a valid operator.")
+        except TypeError as e:
+            raise e

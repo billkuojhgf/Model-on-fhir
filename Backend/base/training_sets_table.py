@@ -5,7 +5,7 @@ import re
 import numpy as np
 
 from datetime import datetime
-from base.lib import TimeObject, BaseVariable, transform_to_correct_type
+from base.lib import FilterOperation, TimeObject, BaseVariable, transform_to_correct_type
 from base.exceptions import VariableNoneError, ThresholdNoneError
 
 
@@ -20,57 +20,6 @@ class _TrainingSet:
         self.duration = duration
         self.null_value_strategy = null_value_strategy
         self.training_config = training_config
-
-
-class FilterOperation:
-
-    # TODO: 原先的variable可以為None, 但為什麼？
-    def __init__(self, threshold, prefix: str = "eq", type: str = "value"):
-        # Doesn't support nan threshold.
-        # Reason: nan is not a valid filter while training. (Or maybe is?)
-        self.prefix = prefix
-        self.type = type
-        self._threshold = threshold
-
-    @property
-    def threshold(self):
-        return self._threshold
-
-    @threshold.setter
-    def threshold(self, value):
-        if value == "nan":
-            raise ValueError(f"nan is not a valid threshold.")
-        else:
-            self._threshold = value
-
-    def validate(self, variable):
-        if type(variable) == BaseVariable:
-            var = variable.get_value()
-        else:
-            var = variable
-
-        if type(self._threshold) == BaseVariable:
-            thres = self._threshold.get_value()
-        else:
-            thres = self._threshold
-
-        # Transfer to correct type
-        thres = transform_to_correct_type(thres, self.type)
-        var = transform_to_correct_type(var, self.type)
-
-        # 目前想下來，當比較單位為時間，則threshold必須為datetime，否則回傳錯誤
-        if thres is None:
-            raise ThresholdNoneError(f"Threshold is None on {self.type} type.")
-
-        if var is None:
-            raise VariableNoneError(f"Variable is None on {self.type} type.")
-
-        try:
-            return getattr(operator, self.prefix)(var, thres)
-        except KeyError:
-            raise AttributeError(f"{self.prefix} is not a valid operator.")
-        except TypeError as e:
-            raise e
 
 
 class _TrainingSetTable:

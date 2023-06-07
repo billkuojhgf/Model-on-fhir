@@ -70,9 +70,13 @@ def get_model(model_type, base_path):
         return None
 
 
-def predict(x_test, base_path):
-    x = list()
-    model = tf.keras.models.load_model(f"{base_path}/new_model")
-    x.append(x_test)
-    result = model.predict(x)
+def predict(data, base_path, model_type="register"):
+    enc = load(f'{base_path}/encoder.joblib')
+    column_enc = list(enc.feature_names_in_)
+    df = pd.DataFrame(columns=column_enc)
+    df.loc[0] = data
+    df = enc.transform(df.astype(int).astype(str))
+    df = pd.DataFrame(df.toarray(), columns=enc.get_feature_names())
+    model = tf.keras.models.load_model(f"{base_path}/{model_type}_model")
+    result = model.predict(df)
     return result[0]

@@ -1,7 +1,7 @@
 import joblib
 
 
-def predict(data: list, base_path):
+def predict(data: list, base_path, model_type="register"):
     # @data comes from two places, one is from diabetes_predict(), the other is from flask(not sure where yet).
     # data allows two kind of value set, one is dictionary(the value returned from get_resources()),
     #   another is value(the value comes from frontend)
@@ -11,7 +11,7 @@ def predict(data: list, base_path):
     # controlled variable: glucose, diastolic blood pressure, insulin, height, weight, age
 
     temp = data
-    loaded_model = joblib.load(f"{base_path}/register_model")
+    loaded_model = joblib.load(f"{base_path}/{model_type}_model")
     x.append(temp)
     result = loaded_model.predict_proba(x)
     # result = [no's probability, yes's probability]

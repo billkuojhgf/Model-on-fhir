@@ -1,2 +1,3 @@
-model,last_training_time,last_training_data_time,old_model_validate,new_model_validate,register_model
-SPC,,,,,
+model,last_training_time,last_training_data_time,numbers_of_patients,old_model_evaluate,new_model_evaluate,register_model,threshold
+SPC,2023-06-07 20:05:19.663892,2018-01-01T00:00:00,481,0.55,0.6685185185185184,new,0.07649232
+SPC,2023-06-07 20:22:02.122782,2018-11-08 00:00:00,481,0.55,0.7018518518518518,new,0.06723963

@@ -5,6 +5,7 @@ from datetime import date, datetime
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve
 from sklearn.model_selection import train_test_split
+import tensorflow as tf
 
 from base.exceptions import ThresholdNoneError
 from base.exceptions import VariableNoneError
@@ -15,6 +16,7 @@ from base.patient_data_search import extract_data_in_data_sets
 from base.search_sets import get_datetime_value_with_func
 from base.model_input_transformer import transformer
 from base.lib import transform_to_correct_type
+from base_module import get_model_result
 
 
 # First, we need to check what features are those resources belong to.
@@ -89,7 +91,8 @@ def combine_training_and_predicting_feature_table(model_name: str):
     :return:
     """
     # Combine the feature table of training and predicting.
-    training_feature_code_dict = get_feature_code_dict(training_feature_table, model_name)
+    training_feature_code_dict = get_feature_code_dict(
+        training_feature_table, model_name)
     feature_code_dict = get_feature_code_dict(feature_table, model_name)
     code_dict = {}
     for key in set(list(feature_code_dict.keys()) + list(training_feature_code_dict.keys())):
@@ -125,7 +128,8 @@ def get_feature_code_dict(table, model_name) -> dict:
             else:
                 temp_code_system_dict["code"] = code_system
 
-            temp_code_system_list.append(["code", "coding", temp_code_system_dict])
+            temp_code_system_list.append(
+                ["code", "coding", temp_code_system_dict])
 
         feature_code_dict[resource_type][feature_name] = temp_code_system_list
 
@@ -143,8 +147,10 @@ def extract_value_and_datetime(resources: dict, table) -> dict:
     for patient_id, resources in resources.items():
         patient_separated_data = {}
         for feature_name, resources in resources.items():
-            temp_data = {"resource": resources, "type": table[feature_name]["type_of_data"]}
-            patient_separated_data[feature_name] = extract_data_in_data_sets(temp_data, table[feature_name])
+            temp_data = {"resource": resources,
+                         "type": table[feature_name]["type_of_data"]}
+            patient_separated_data[feature_name] = extract_data_in_data_sets(
+                temp_data, table[feature_name])
 
         return_data[patient_id] = patient_separated_data
 
@@ -171,7 +177,8 @@ def filter_data_in_data_sets(data_sets: dict, filter_list):
     if len(data_sets_list) == 1:
         try:
             if datetime.fromisoformat(data_sets_list[0][0]) == datetime.fromordinal(date.today().toordinal()):
-                return_dict["date"], return_dict["value"] = zip(*data_sets_list)
+                return_dict["date"], return_dict["value"] = zip(
+                    *data_sets_list)
                 return_dict["date"] = list(return_dict["date"])
                 return_dict["value"] = list(return_dict["value"])
                 return return_dict
@@ -185,7 +192,8 @@ def filter_data_in_data_sets(data_sets: dict, filter_list):
         filter_list_validate = []
         for obj in filter_list:
             if obj.type == "date":
-                validated_data = transform_to_correct_type(date_value_set[0], "date")
+                validated_data = transform_to_correct_type(
+                    date_value_set[0], "date")
             elif obj.type == "value":
                 validated_data = transform_to_correct_type(date_value_set[1])
             else:
@@ -220,14 +228,15 @@ def extract_value(value_and_datetime_of_patients_after_filter) -> dict:
     return return_data
 
 
-def resources_filter(value_and_datetime_of_patients, feature_table, filter_list) -> dict:
+def resources_filter(value_and_datetime_of_patients, feature_table, filter_list) -> (dict, dict):
     """
     Filter the resources by the filter list.
     :param value_and_datetime_of_patients:
     :param temp_filter_list:
     :return:
     """
-    return_data = {}
+    return_x_data = {}
+    return_y_data = {}
     for patient_id, value_and_datetime_of_patient in value_and_datetime_of_patients.items():
         temp_filter_list = copy.deepcopy(filter_list)
         patient_separated_data = {}
@@ -241,7 +250,8 @@ def resources_filter(value_and_datetime_of_patients, feature_table, filter_list)
                 threshold = threshold[1:-1]
                 # get the datetime and value with search_type strategy defined in feature table
                 # store the rest data
-                value_and_datetime_threshold = value_and_datetime_of_patient.pop(threshold)
+                value_and_datetime_threshold = value_and_datetime_of_patient.pop(
+                    threshold)
                 value_and_datetime_for_threshold_feature[threshold] = value_and_datetime_threshold
                 # get the value and datetime with the strategy defined in feature table
                 threshold = get_datetime_value_with_func(
@@ -253,19 +263,26 @@ def resources_filter(value_and_datetime_of_patients, feature_table, filter_list)
 
         for feature_name, value_and_datetime_of_features in value_and_datetime_of_patient.items():
             patient_separated_data[feature_name] = \
-                filter_data_in_data_sets(value_and_datetime_of_features, temp_filter_list)
+                filter_data_in_data_sets(
+                    value_and_datetime_of_features, temp_filter_list)
 
-        patient_separated_data = patient_separated_data | value_and_datetime_for_threshold_feature
-
-        return_data[patient_id] = patient_separated_data
+        return_x_data[patient_id] = patient_separated_data
+        return_y_data[patient_id] = value_and_datetime_for_threshold_feature
 
     # get the value and datetime with the strategy defined in feature table
-    for patient_id, value_and_datetime_of_patient in return_data.items():
+    for patient_id, value_and_datetime_of_patient in return_x_data.items():
         for feature_name, value_and_datetime_of_features in value_and_datetime_of_patient.items():
-            return_data[patient_id][feature_name] = \
-                get_datetime_value_with_func(value_and_datetime_of_features, feature_table[feature_name])
+            return_x_data[patient_id][feature_name] = \
+                get_datetime_value_with_func(
+                    value_and_datetime_of_features, feature_table[feature_name])
 
-    return return_data
+    for patient_id, value_and_datetime_of_patient in return_y_data.items():
+        for feature_name, value_and_datetime_of_features in value_and_datetime_of_patient.items():
+            return_y_data[patient_id][feature_name] = \
+                get_datetime_value_with_func(
+                    value_and_datetime_of_features, feature_table[feature_name])
+
+    return return_x_data, return_y_data
 
 
 def imputation_stategy(df: pd.DataFrame, null_value_strategy: dict) -> pd.DataFrame:
@@ -283,15 +300,20 @@ def imputation_stategy(df: pd.DataFrame, null_value_strategy: dict) -> pd.DataFr
     default_strategy = null_value_strategy.pop("default")
     for feature_name, strategy in null_value_strategy.items():
         if strategy == "mean":
-            return_df[feature_name].fillna(return_df[feature_name].mean(), inplace=True, downcast="infer")
+            return_df[feature_name].fillna(
+                return_df[feature_name].mean(), inplace=True, downcast="infer")
         elif strategy == "median":
-            return_df[feature_name].fillna(return_df[feature_name].median(), inplace=True, downcast="infer")
+            return_df[feature_name].fillna(
+                return_df[feature_name].median(), inplace=True, downcast="infer")
         elif strategy == "mode":
-            return_df[feature_name].fillna(return_df[feature_name].mode()[0], inplace=True, downcast="infer")
+            return_df[feature_name].fillna(return_df[feature_name].mode()[
+                                           0], inplace=True, downcast="infer")
         elif type(transform_to_correct_type(strategy)) in [int, float]:
-            return_df[feature_name].fillna(transform_to_correct_type(default_strategy), inplace=True, downcast="infer")
+            return_df[feature_name].fillna(transform_to_correct_type(
+                default_strategy), inplace=True, downcast="infer")
         else:
-            raise ValueError("The type of null value strategy is not supported.")
+            raise ValueError(
+                "The type of null value strategy is not supported.")
 
     # Fill the rest columns with the default strategy
     if default_strategy == "mean":
@@ -300,9 +322,11 @@ def imputation_stategy(df: pd.DataFrame, null_value_strategy: dict) -> pd.DataFr
         return_df.fillna(return_df.median(), inplace=True, downcast="infer")
     elif default_strategy == "mode":
         for feature_name in return_df.columns:
-            return_df[feature_name].fillna(return_df[feature_name].mode()[0], inplace=True, downcast="infer")
+            return_df[feature_name].fillna(return_df[feature_name].mode()[
+                                           0], inplace=True, downcast="infer")
     elif type(transform_to_correct_type(default_strategy)) in [int, float]:
-        return_df.fillna(transform_to_correct_type(default_strategy), inplace=True, downcast="infer")
+        return_df.fillna(transform_to_correct_type(
+            default_strategy), inplace=True, downcast="infer")
     else:
         raise ValueError("The type of null value strategy is not supported.")
 
@@ -312,7 +336,8 @@ def imputation_stategy(df: pd.DataFrame, null_value_strategy: dict) -> pd.DataFr
 def transform_data(
         model_feature_table,
         value_and_datetime_of_patients_after_filter,
-        model_name
+        model_name,
+        y_data=False
 ) -> dict:
     """
     Transform the data to the format that can be used in the model.
@@ -324,7 +349,23 @@ def transform_data(
     return_dict = {}
 
     for patient_id, value_and_datetime_of_patient in value_and_datetime_of_patients_after_filter.items():
-        transformed_data_list = transformer(model_feature_table, value_and_datetime_of_patient, model_name)
+        if y_data:
+            # 如果是y data, 需要將resource date 強制抓出，以為了後續剔除上次訓練過的資料
+            y_datatime = None
+            for feature_name, value_and_datetime_of_features in value_and_datetime_of_patient.items():
+                if value_and_datetime_of_features["date"] is None:
+                    continue
+                if y_datatime is None:
+                    y_datatime = transform_to_correct_type(
+                        value_and_datetime_of_features["date"], "date")
+                else:
+                    y_datatime = max(y_datatime, transform_to_correct_type(
+                        value_and_datetime_of_features["date"], "date"))
+
+        transformed_data_list = transformer(
+            model_feature_table, value_and_datetime_of_patient, model_name)
+        if y_data:
+            transformed_data_list.append(y_datatime)
         return_dict[patient_id] = transformed_data_list
 
     return return_dict
@@ -356,7 +397,8 @@ def split_data(df, training_config, y_columns: list) -> (pd.DataFrame, pd.DataFr
     """
     # Split the data into training set and testing set
     if len(y_columns) > 1:
-        raise ValueError("The number of y columns is more than 1, which is not supported now.")
+        raise ValueError(
+            "The number of y columns is more than 1, which is not supported now.")
     y_col = y_columns[0]
     size = float(training_config['test_size'])
     seed = 87
@@ -388,7 +430,7 @@ def drop_unuseful_rows(df, null_value_strategy):
     return return_df
 
 
-def model_evaluation(register_model, new_model, x_test, y_test, threshold=0.5) -> dict:
+def model_evaluation(register_model, new_model, x_test, y_test) -> dict:
     """
     Evaluate the performance of the model.
     :param register_model:
@@ -407,8 +449,15 @@ def model_evaluation(register_model, new_model, x_test, y_test, threshold=0.5) -
 
     # Only worked while using tensorflow as the ML framework.
     # TODO: Need some changes.
-    y_prev_pred = register_model.predict(x_test)
-    y_new_pred = new_model.predict(x_test)
+    if "predict" in dir(register_model):
+        y_prev_pred = register_model.predict(x_test)
+    elif "predict_proba" in dir(register_model):
+        y_prev_pred = register_model.predict_proba(x_test)[:, 1]
+
+    if "predict" in dir(new_model):
+        y_new_pred = new_model.predict(x_test)
+    elif "predict_proba" in dir(new_model):
+        y_new_pred = new_model.predict_proba(x_test)[:, 1]
 
     reg_validate_result = evaluating(y_prev_pred, y_test)
     new_validate_result = evaluating(y_new_pred, y_test)
@@ -435,6 +484,7 @@ def evaluating(y_perd, y_actual):
     # Calculate the best threshold
     best_threshold = thresholds[np.argmax(tpr - fpr)]
     print("The best threshold is: ", best_threshold)
+    return_dict['best_threshold'] = best_threshold
 
     # Calculate the auroc
     return_dict['auroc'] = roc_auc_score(y_actual, y_perd)
@@ -454,3 +504,24 @@ def evaluating(y_perd, y_actual):
     return_dict['f1_score'] = f1_score(y_actual, y_perd_flat)
 
     return return_dict
+
+
+def drop_trained_data(value_of_data_of_patient, last_trained_filter_operation):
+    """
+    Drop the data that has been trained, and returns the maximum datetime of the training data.
+
+    """
+    return_dict = {}
+    max_datetime = None
+    for patient_id, value_list in value_of_data_of_patient.items():
+        row_datetime = value_list[-1]
+
+        if max_datetime is None:
+            max_datetime = row_datetime
+        else:
+            max_datetime = max(max_datetime, row_datetime)
+
+        if last_trained_filter_operation.validate(row_datetime) is True:
+            return_dict[patient_id] = value_list[:-1]
+
+    return return_dict, max_datetime

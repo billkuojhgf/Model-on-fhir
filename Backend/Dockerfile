@@ -10,7 +10,7 @@ WORKDIR /app
 COPY . /app
 
 # Install project dependencies using Conda
-RUN pip install -r requirement-arm-new.txt
+RUN pip install -r requirement.txt
 
 # Expose port if necessary (replace 8080 with your desired port)
 EXPOSE 5050

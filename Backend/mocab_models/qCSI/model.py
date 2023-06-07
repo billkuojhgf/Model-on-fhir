@@ -4,7 +4,7 @@ from mocab_models.qCSI.mask import unit_type
 from mocab_models.qCSI.mask import mask_type
 
 
-def predict(data: list, base_path) -> int:
+def predict(data: list, base_path, model_type="register") -> int:
     """
     patient_data_dict is a dictionary that contains respiratory rate, o2 flow rate and spo2.
     The value of the keys are in dictionary type too, they are all in the same structure with date and value key-value.

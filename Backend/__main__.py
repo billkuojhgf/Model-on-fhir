@@ -3,7 +3,7 @@ from app import mocab_app
 from flask_cors import CORS
 from config import configObject as conf
 from base.object_store import training_sets_table
-from apscheduler.schedulers.background import BackgroundScheduler
+from flask_apscheduler import APScheduler
 
 
 def init_models():
@@ -35,9 +35,7 @@ def init_models():
 if __name__ == '__main__':
     init_models()
 
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=lambda: print("hi"), trigger="interval", seconds=5)
-    scheduler.start()
+    scheduler = APScheduler()
 
     CORS(mocab_app)
     port = conf.get("flask_config").get("PORT")

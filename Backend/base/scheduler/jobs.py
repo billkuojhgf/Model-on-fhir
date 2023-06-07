@@ -1,5 +1,15 @@
 import requests
+from base.object_store import 
 from config import configObject as conf
+
+def schedules():
+    """
+    Description:
+        This function is used to register the scheduler.
+    """
+    scheduler = conf.get('scheduler')
+    for model_name in scheduler.get('model_list'):
+        call_api(model_name)
 
 
 def call_api(model_name):

@@ -39,14 +39,17 @@ def return_model_result(patient_data_dict, api):
     return get_model_result(patient_data_list, api)
 
 
-def get_model_result(patient_data_list, api):
+def get_model_result(patient_data_list, api, model_type="register"):
     base_path = f"./mocab_models/{api}"
-    model_results = globals()[api].predict(patient_data_list, base_path)
-    return model_results
+    try:
+        model_results = globals()[api].predict(patient_data_list, base_path, model_type)
+        return model_results
+    except Exception as e:
+        print(e)
+        return None
 
 
-def encode_model_data_set(x_train, x_test, y_train, y_test, api) -> (
-        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
+def encode_model_data_set(x_train, x_test, y_train, y_test, api) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     base_path = f"./mocab_models/{api}"
     try:
         x_train, x_test, y_train, y_test = globals()[api].encode(x_train, x_test, y_train, y_test, base_path)

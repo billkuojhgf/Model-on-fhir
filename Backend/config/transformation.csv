@@ -161,10 +161,10 @@ SPC,alcohol_behavior,category,2=gt|0&lt|10,4
 SPC,alcohol_behavior,category,9=999,4
 SPC,alcohol_behavior,category,none=[default],4
 SPC,radiation_therapy_time,numeric,,
-SPC,RTDATE,category,1=[radiation_therapy_time]|None,11
-SPC,RTDATE,category,2=[default],11
+SPC,RTDATE,category,1=[radiation_therapy_time]|None,12
+SPC,RTDATE,category,2=[default],12
 SPC,systemic_therapy_time,numeric,,
-SPC,STDATE,category,1=[systemic_therapy_time]|None,12
-SPC,STDATE,category,2=[default],12
-SPC,OP,category,1=[performedDate]|None,13
-SPC,OP,category,2=[default],13
+SPC,STDATE,category,1=[systemic_therapy_time]|None,13
+SPC,STDATE,category,2=[default],13
+SPC,OP,category,1=[performedDate]|None,11
+SPC,OP,category,2=[default],11

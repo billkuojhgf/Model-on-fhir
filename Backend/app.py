@@ -88,8 +88,3 @@ def api_with_post(api):
     verify_data(patient_data_dict, api)
     patient_data_dict["predict_value"] = return_model_result(patient_data_dict, api)
     return jsonify(patient_data_dict)
-
-
-if __name__ == "__main__":
-    mocab_app.debug = True
-    mocab_app.run()
