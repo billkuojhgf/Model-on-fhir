@@ -1,8 +1,11 @@
 import os
+
+import requests
+
 from app import mocab_app
 from flask_cors import CORS
 from config import configObject as conf
-from base.object_store import training_sets_table
+from base.scheduler.jobs import Config
 from flask_apscheduler import APScheduler
 
 
@@ -34,10 +37,13 @@ def init_models():
 
 if __name__ == '__main__':
     init_models()
+    mocab_app.config.from_object(Config)
 
     scheduler = APScheduler()
+    scheduler.init_app(mocab_app)
+    scheduler.start()
 
     CORS(mocab_app)
     port = conf.get("flask_config").get("PORT")
     debug = conf.get("flask_config").get("DEBUG")
-    mocab_app.run(port=port, debug=debug)
+    mocab_app.run(port=port, debug=debug, use_reloader=False)

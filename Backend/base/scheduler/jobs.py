@@ -1,15 +1,37 @@
+from datetime import datetime
 import requests
-from base.object_store import 
+from dateutil.relativedelta import relativedelta
+
+from base.object_store import training_sets_table
 from config import configObject as conf
 
-def schedules():
+
+def scheduled_jobs():
     """
     Description:
-        This function is used to register the scheduler.
+        This function is used to define the scheduled jobs.
     """
-    scheduler = conf.get('scheduler')
-    for model_name in scheduler.get('model_list'):
-        call_api(model_name)
+    return_list = []
+    schedules = training_sets_table.get_training_set_schedule()
+    for schedule in schedules:
+        duration_time_obj = schedule["duration"]
+        return_list.append({
+            "id": schedule["model_name"],
+            "func": "base.scheduler.jobs:call_api",
+            "args": [schedule["model_name"]],
+            "trigger": "interval",
+            "next_run_time": datetime.now() + relativedelta(seconds=10),
+            "days": duration_time_obj.get_days_from_now(),
+            "hours": duration_time_obj.get_hours(),
+            "minutes": duration_time_obj.get_minutes(),
+            "seconds": duration_time_obj.get_seconds()
+        })
+    return return_list
+
+
+class Config(object):
+    JOBS = scheduled_jobs()
+    SCHEDULER_API_ENABLED = True
 
 
 def call_api(model_name):
@@ -18,6 +40,5 @@ def call_api(model_name):
         This function is used to trigger the continuous training pipeline.
         It would be called by the scheduler.
     """
-
-    api_url = f"http://localhost:{conf.get('flask_config').get('PORT')}/{model_name}"
+    api_url = f"http://localhost:{conf.get('flask_config').get('PORT')}{conf.get('base_urls').get('continuous_training_prefix')}/{model_name}"
     requests.get(api_url)

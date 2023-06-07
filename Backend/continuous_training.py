@@ -1,3 +1,4 @@
+import threading
 from datetime import datetime
 import pandas as pd
 from flask import Blueprint, jsonify
@@ -30,14 +31,23 @@ from base.object_store import \
     training_status_table
 
 ct_app = Blueprint('con_train', __name__)
+lock = threading.Lock()
 
 
 @ct_app.route("/<api>", methods=['GET'])
 def continuous_training_process(api):
-    return jsonify(training_process(api))
+
+    thread = threading.Thread(target=training_process, kwargs={'model_name': api})
+    thread.start()
+
+    return jsonify({"message": "Training process is running in the background."})
 
 
 def training_process(model_name):
+    # Lock the thread
+    lock.acquire(timeout=1200)
+
+    # Get the training set from the training_sets_table
     training_sets = training_sets_table.get_training_set(model_name)
     # Add exception for error 404
     try:
@@ -97,7 +107,9 @@ def training_process(model_name):
 
     numbers_of_patients = len(df.index)
     if numbers_of_patients == 0:
-        return "No new data to train"
+        print("Since last training, there is no new data to train.")
+        lock.release()
+        return
     df.columns = column
 
     # First is to drop the rows that matches the condition we've set in the training_sets_table.
@@ -156,7 +168,11 @@ def training_process(model_name):
     }
 
     training_status_table.write_new_data_into_csv(return_dict)
-    return return_dict
+
+    # Release the lock
+    lock.release()
+
+    print("Training process finished. The return dict is: ", return_dict)
 
 
 if __name__ == "__main__":

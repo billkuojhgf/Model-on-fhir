@@ -464,8 +464,8 @@ def model_evaluation(register_model, new_model, x_test, y_test) -> dict:
 
     for key in reg_validate_result.keys():
         return_dict[key] = {
-            "register_model": reg_validate_result[key],
-            "new_model": new_validate_result[key]
+            "register_model": round(reg_validate_result[key], 3),
+            "new_model": round(new_validate_result[key], 3)
         }
 
     return return_dict
