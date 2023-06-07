@@ -110,7 +110,7 @@ class TimeObject:
     def get_seconds(self):
         return self._seconds
 
-    def return_datetime(self):
+    def return_datetime(self) -> datetime:
         return datetime(self._years, self._months, self._days, self._hours, self._minutes, self._seconds)
 
 

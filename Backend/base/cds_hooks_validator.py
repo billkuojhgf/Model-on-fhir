@@ -46,7 +46,11 @@ def validation(value, **kwargs):
 def model_evaluating(model_name: str,
                      patient_resource: SyncFHIRResource,
                      encounter_resource: SyncFHIRResource) -> bool:
-    cds_hooks_config = cds_hooks_config_table.get_cds_hooks_table_dict(model_name)
+    try:
+        cds_hooks_config = cds_hooks_config_table.get_cds_hooks_table_dict(model_name)
+    except KeyError:
+        return False
+
     # If the condition is empty, always calculate it.
     if len(cds_hooks_config["condition"]) == 0:
         return True

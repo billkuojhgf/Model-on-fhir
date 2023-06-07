@@ -3,11 +3,9 @@ from .response import Response
 from .server import init
 from typing import List
 from flask import Blueprint
-# from flask import Flask
 
 class App(object):
     services: List[Service] = []
-    # server: Flask
     server: Blueprint
 
     def __init__(self, services: List[Service] = None):
@@ -33,6 +31,7 @@ class App(object):
                 # message = f"service with id: {id} and hook {hook} not found"
             return Response(statusCode=400)
         except Exception as e:
+            print(e)
             return Response(statusCode=500)
 
     def _handler_decorator(self, service_type, id: str, description: str, **kwargs):
@@ -62,6 +61,3 @@ class App(object):
 
     def encounter_discharge(self, *args, **kwargs):
         return self._handler_decorator("encounter-discharge", *args, **kwargs)
-
-    # def serve(self, **kwargs):
-    #     serve(**kwargs)

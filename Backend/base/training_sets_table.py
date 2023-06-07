@@ -185,3 +185,10 @@ class _TrainingSetTable:
 
     def get_training_set(self, name: str) -> _TrainingSet:
         return self.table[name]
+
+    def get_training_set_schedule(self) -> list:
+        return_dict = []
+        for name, training_set in self.table.items():
+            temp_dict = {"model_name": name, "duration": training_set.duration}
+            return_dict.append(temp_dict)
+        return return_dict

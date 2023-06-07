@@ -7,7 +7,7 @@ from base.cds_hooks_validator import card_determine
 from base.patient_data_search import model_feature_search_with_patient_id
 from base.object_store import feature_table
 from base.object_store import fhir_class_obj
-from config import configObject as config
+from config import configObject as conf
 from fhirpy.base.exceptions import ResourceNotFound
 
 cds_app = cds.App()
@@ -43,15 +43,14 @@ def model_evaluation(patient_id, encounter_id) -> list:
 
 @cds_app.patient_view("MoCab-CDS-Service", "The patient greeting service greets a patient!", title="Patient Greeter")
 def greeting(r: cds.PatientViewRequest, response: cds.Response):
-    config['patient_id'] = r.context.patientId
+    conf['patient_id'] = r.context.patientId
 
-    """    
     try:
         fhir_class_obj.update_client(url=r.fhirServer,
                                      authorization=f"{r.fhirAuthorization.token_type} {r.fhirAuthorization.access_token}")
     except Exception as e:
         raise Exception(e)
-    """
+
     # Add some if-else statement of models' using situation.
     calculated_list = model_evaluation(r.context.patientId, r.context.encounterId)
 
@@ -109,12 +108,8 @@ def generate_cds_card(patient_id, patient_data_dictionary, model_name) -> cds.Ca
     More detail..."""
 
     card = getattr(cds.Card, card_used.value)(summary, source, suggestions=suggestions, detail=detail)
-    card.add_link(cds.Link.smart("MoCab-App",
-                                 "http://localhost:5000/launch"))
+    card.add_link(cds.Link.smart(
+        "MoCab-App",
+        f"{conf.get('base_urls').get('BACKEND_URL')}{conf.get('base_urls').get('smart_prefix')}/launch"
+    ))
     return card
-
-
-# if __name__ == '__main__':
-#     debug = os.environ.get('DEBUG', True)
-#     port = os.environ.get("PORT", 5001)
-#     cds_app.serve(host="0.0.0.0", debug=debug, port=port)

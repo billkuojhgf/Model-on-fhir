@@ -3,6 +3,7 @@ from flask import request, redirect, abort, jsonify
 from flask import Blueprint
 from base import patient_data_search as ds
 from base.object_store import feature_table
+from config import configObject as conf
 
 smart_clientObj: FHIRClient
 smart_app = Blueprint('smart_on_fhir', __name__)
@@ -31,7 +32,7 @@ def smart_launch():
     settings = {
         'app_id': 'mocab_app',
         'api_base': request.values.get("iss"),
-        'redirect_uri': f"http://{request.host}/fhir-app",
+        'redirect_uri': f"{conf.get('base_urls').get('BACKEND_URL')}{conf.get('base_urls').get('smart_prefix')}/fhir-app",
         'scope': " ".join(["patient/*.read", "launch"])
     }
     smart_clientObj = FHIRClient(settings=settings)

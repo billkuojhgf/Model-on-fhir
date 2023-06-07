@@ -56,7 +56,7 @@ class _HooksConfigTable:
     def get_cds_hooks_table_dict(self, model_name):
         # TODO: table_obj = DefaultMunch.fromDict(table.table), change table into table object
         if model_name not in self.table:
-            raise KeyError("Model is not exist in the feature table.")
+            raise KeyError(f"Model '{model_name}' is not exist in the CDS Hook table.")
 
         return self.table[model_name]
 

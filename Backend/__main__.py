@@ -1,8 +1,9 @@
 import os
-
-# from mocab_models.qCSI.mask import mask  # TODO: 之後要改成從mocab_models中import
 from app import mocab_app
 from flask_cors import CORS
+from config import configObject as conf
+from base.object_store import training_sets_table
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
 def init_models():
@@ -32,7 +33,13 @@ def init_models():
 
 
 if __name__ == '__main__':
-    # mask()
     init_models()
+
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=lambda: print("hi"), trigger="interval", seconds=5)
+    scheduler.start()
+
     CORS(mocab_app)
-    mocab_app.run(port=5050, debug=True)
+    port = conf.get("flask_config").get("PORT")
+    debug = conf.get("flask_config").get("DEBUG")
+    mocab_app.run(port=port, debug=debug)

@@ -48,7 +48,10 @@ def get_model_result(patient_data_list, api):
 def encode_model_data_set(x_train, x_test, y_train, y_test, api) -> (
         pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     base_path = f"./mocab_models/{api}"
-    x_train, x_test, y_train, y_test = globals()[api].encode(x_train, x_test, y_train, y_test, base_path)
+    try:
+        x_train, x_test, y_train, y_test = globals()[api].encode(x_train, x_test, y_train, y_test, base_path)
+    except AttributeError:
+        pass
     return x_train, x_test, y_train, y_test
 
 

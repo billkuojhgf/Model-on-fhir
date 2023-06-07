@@ -59,7 +59,7 @@ class _FeatureTable:
 
     def get_model_feature_dict(self, model_name):
         if model_name not in self.table:
-            raise KeyError("Model is not exist in the feature table.")
+            raise KeyError(f"Model '{model_name}' is not exist in the feature table.")
 
         return self.table[model_name]
 
