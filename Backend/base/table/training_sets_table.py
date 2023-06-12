@@ -13,11 +13,11 @@ class _TrainingSet:
 
     def __init__(self,
                  data_filter: list,
-                 duration: TimeObject,
+                 interval: TimeObject,
                  null_value_strategy: dict,
                  training_config: dict):
         self.data_filter = data_filter
-        self.duration = duration
+        self.interval = interval
         self.null_value_strategy = null_value_strategy
         self.training_config = training_config
 
@@ -33,9 +33,9 @@ class _TrainingSetTable:
             rows = csv.DictReader(training_sets_table)
 
             for row in rows:
-                special_columns = ["models", "filter", "duration", "null_value_strategy"]
+                special_columns = ["models", "filter", "interval", "null_value_strategy"]
                 data_filter = self.data_filter_handler(row["filter"])
-                duration = TimeObject(row["duration"])
+                interval = TimeObject(row["interval"])
                 null_value_strategy = self.null_value_strategy_handler(row["null_value_strategy"])
                 training_configs = dict()
 
@@ -44,7 +44,7 @@ class _TrainingSetTable:
                         training_configs[key] = value
 
                 return_dict[row["models"]] = \
-                    _TrainingSet(data_filter, duration, null_value_strategy, training_configs)
+                    _TrainingSet(data_filter, interval, null_value_strategy, training_configs)
 
             return return_dict
 
@@ -138,6 +138,6 @@ class _TrainingSetTable:
     def get_training_set_schedule(self) -> list:
         return_dict = []
         for name, training_set in self.table.items():
-            temp_dict = {"model_name": name, "duration": training_set.duration}
+            temp_dict = {"model_name": name, "interval": training_set.interval}
             return_dict.append(temp_dict)
         return return_dict

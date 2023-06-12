@@ -1,7 +1,4 @@
 import os
-
-import requests
-
 from app import mocab_app
 from flask_cors import CORS
 from config import configObject as conf

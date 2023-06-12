@@ -42,6 +42,7 @@ def return_model_result(patient_data_dict, api):
 def get_model_result(patient_data_list, api, model_type="register"):
     base_path = f"./mocab_models/{api}"
     try:
+        patient_data_list = encode_model_data_set(patient_data_list, api=api)
         model_results = globals()[api].predict(patient_data_list, base_path, model_type)
         return model_results
     except Exception as e:
@@ -49,13 +50,17 @@ def get_model_result(patient_data_list, api, model_type="register"):
         return None
 
 
-def encode_model_data_set(x_train, x_test, y_train, y_test, api) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
+def encode_model_data_set(x, y=None, api=None) -> pd.DataFrame or (pd.DataFrame, pd.DataFrame):
     base_path = f"./mocab_models/{api}"
     try:
-        x_train, x_test, y_train, y_test = globals()[api].encode(x_train, x_test, y_train, y_test, base_path)
+        x, y = globals()[api].encode(x, y, base_path)
     except AttributeError:
         pass
-    return x_train, x_test, y_train, y_test
+
+    if y is None:
+        return x
+
+    return x, y
 
 
 def train_model(x_train, y_train, api):

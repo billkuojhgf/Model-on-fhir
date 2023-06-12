@@ -443,13 +443,13 @@ class Procedure(ResourcesInterface, GetValueAndDatetimeInterface):
         return None
 
     def get_value(self, resource: dict or SyncFHIRResource, route: list or None) -> int or str or float or bool:
-        # Two situation: one is to get the value of resource, the other is to get the value of resource.component
-        if type(resource) is not dict and type(resource) is not SyncFHIRResource:
-            return resource
+        # The default get_value function in Procedure is to return boolean whether the procedure is done or not.
+        if resource is None:
+            return False
 
         route_list = []
         if route is None:
-            raise RouteNotImplemented("Procedure should have route.")
+            return True
         else:
             for item in route:
                 route_list.append(fhir_resources_route.get_route(item))
@@ -498,6 +498,7 @@ class Condition(ResourcesInterface, GetValueAndDatetimeInterface):
         return None
 
     def get_value(self, resource, route: list or None) -> bool or Any:
+        # The default get_value function in Condition is to return boolean whether the patient has the conditions.
         if resource is None:
             return False
 

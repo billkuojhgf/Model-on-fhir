@@ -447,17 +447,16 @@ def model_evaluation(register_model, new_model, x_test, y_test) -> dict:
     """
     return_dict = {}
 
-    # Only worked while using tensorflow as the ML framework.
-    # TODO: Need some changes.
-    if "predict" in dir(register_model):
-        y_prev_pred = register_model.predict(x_test)
-    elif "predict_proba" in dir(register_model):
+    # Determine the included function of the model
+    if "predict_proba" in dir(register_model):
         y_prev_pred = register_model.predict_proba(x_test)[:, 1]
+    elif "predict" in dir(register_model):
+        y_prev_pred = register_model.predict(x_test)
 
-    if "predict" in dir(new_model):
-        y_new_pred = new_model.predict(x_test)
-    elif "predict_proba" in dir(new_model):
+    if "predict_proba" in dir(new_model):
         y_new_pred = new_model.predict_proba(x_test)[:, 1]
+    elif "predict" in dir(new_model):
+        y_new_pred = new_model.predict(x_test)
 
     reg_validate_result = evaluating(y_prev_pred, y_test)
     new_validate_result = evaluating(y_new_pred, y_test)
@@ -479,21 +478,22 @@ def evaluating(y_perd, y_actual):
     :return:
     """
     return_dict = {}
+    # Calculate the auroc
+    return_dict['auroc'] = roc_auc_score(y_actual, y_perd)
+
     # Find the best threshold
     fpr, tpr, thresholds = roc_curve(y_actual, y_perd)
     # Calculate the best threshold
     best_threshold = thresholds[np.argmax(tpr - fpr)]
-    print("The best threshold is: ", best_threshold)
     return_dict['best_threshold'] = best_threshold
 
-    # Calculate the auroc
-    return_dict['auroc'] = roc_auc_score(y_actual, y_perd)
     # Flatten the y_perd while it's a 2d array
     if len(y_perd.shape) > 1:
         y_perd_flat = y_perd.flatten()
         y_perd_flat = [1 if y >= best_threshold else 0 for y in y_perd_flat]
     else:
         y_perd_flat = [1 if y >= best_threshold else 0 for y in y_perd]
+
     # Calculate the accuracy
     return_dict['accuracy'] = accuracy_score(y_actual, y_perd_flat)
     # Calculate the precision
@@ -503,6 +503,8 @@ def evaluating(y_perd, y_actual):
     # Calculate the f1 score
     return_dict['f1_score'] = f1_score(y_actual, y_perd_flat)
 
+    # convert values in return_dict to float due to the exceptions from jsonify
+    return_dict = {k: float(v) for k, v in return_dict.items()}
     return return_dict
 
 

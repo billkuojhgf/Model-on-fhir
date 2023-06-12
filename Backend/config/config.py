@@ -6,7 +6,7 @@ _config = {
         "FEATURE_TABLE": "./config/features.csv",
     },
     "fhir_server": {
-        "FHIR_SERVER_URL": "http://ming-desktop.ddns.net:8193/fhir",
+        "FHIR_SERVER_URL": "http://ming-desktop.ddns.net:8192/fhir",
         "FHIR_SERVER_URL_LOCAL": "http://localhost:8090/fhir",
     },
     "bulk_server": {

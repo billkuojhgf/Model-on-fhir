@@ -62,6 +62,6 @@ if __name__ == "__main__":
     from route_converter import parse_route
     import json
 
-    route_table = _FhirResourceRoute("../config/resource.route")
+    route_table = _FhirResourceRoute("../../config/resource.route")
     print(route_table.get_rule_dict())
     print(json.dumps(route_table.get_route_dict("lymph_invaded_amount"), indent=2))

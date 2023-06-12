@@ -30,7 +30,7 @@ MANIFEST_URLS = jmespath.compile('output[*].url')
 SERVER_URLS = config['bulk_server']['BULK_SERVER_URL']
 
 
-class BulkDataClient(object):
+class _BulkDataClient(object):
     manifest = []
 
     def __init__(

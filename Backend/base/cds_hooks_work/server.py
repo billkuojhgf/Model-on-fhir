@@ -27,7 +27,3 @@ def init(app):
             return "client error", 400
 
     return flaskApp
-
-
-# def serve(**kwargs):
-#     flaskApp.run(**kwargs)

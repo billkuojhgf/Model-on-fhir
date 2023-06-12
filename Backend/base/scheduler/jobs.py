@@ -14,17 +14,17 @@ def scheduled_jobs():
     return_list = []
     schedules = training_sets_table.get_training_set_schedule()
     for schedule in schedules:
-        duration_time_obj = schedule["duration"]
+        interval_time_obj = schedule["interval"]
         return_list.append({
             "id": schedule["model_name"],
             "func": "base.scheduler.jobs:call_api",
             "args": [schedule["model_name"]],
             "trigger": "interval",
             "next_run_time": datetime.now() + relativedelta(seconds=10),
-            "days": duration_time_obj.get_days_from_now(),
-            "hours": duration_time_obj.get_hours(),
-            "minutes": duration_time_obj.get_minutes(),
-            "seconds": duration_time_obj.get_seconds()
+            "days": interval_time_obj.get_days_from_now(),
+            "hours": interval_time_obj.get_hours(),
+            "minutes": interval_time_obj.get_minutes(),
+            "seconds": interval_time_obj.get_seconds()
         })
     return return_list
 

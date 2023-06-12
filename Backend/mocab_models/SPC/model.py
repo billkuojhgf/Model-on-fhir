@@ -17,28 +17,25 @@ def config(base_path):
     return config
 
 
-def encode(x_train, x_test, y_train, y_test, base_path):
+def encode(x, y, base_path):
     """
     Function encode會將資料轉譯成model prefer的category
     """
-    df_x = pd.concat([x_train, x_test])
-
     try:
         enc = load(f'{base_path}/encoder.joblib')
     except FileNotFoundError:
-        enc = OneHotEncoder(drop='first').fit(df_x.astype(str))
-        dump(enc, f'{base_path}/encoder.joblib')
+        raise FileNotFoundError("Encoder not found")
 
     column_enc = list(enc.feature_names_in_)
-    x_train = x_train.reindex(columns=column_enc)
-    x_test = x_test.reindex(columns=column_enc)
+    if type(x) == list:
+        df = pd.DataFrame(columns=column_enc)
+        df.loc[0] = x
+    else:
+        df = x
+    x_enc = enc.transform(df.astype(str))
+    x_enc = pd.DataFrame(x_enc.toarray(), columns=enc.get_feature_names_out())
 
-    x_train = enc.transform(x_train.astype(str))
-    x_test = enc.transform(x_test.astype(str))
-    x_train = pd.DataFrame(x_train.toarray(), columns=enc.get_feature_names())
-    x_test = pd.DataFrame(x_test.toarray(), columns=enc.get_feature_names())
-
-    return x_train, x_test, y_train, y_test
+    return x_enc, y
 
 
 def train(x_train, y_train, base_path):
@@ -54,7 +51,8 @@ def train(x_train, y_train, base_path):
     model = tf.keras.models.load_model(f"{base_path}/register_model")
     model.compile(optimizer=opt_adam, loss=tf.losses.BinaryFocalCrossentropy(gamma=2.0), metrics=METRICS)
 
-    model.fit(x_train, y_train, batch_size=16, epochs=conf['epoch'], verbose=2)
+    model.fit(x_train, y_train,
+              batch_size=16, epochs=conf['epoch'], verbose=0)
 
     model.save(f"{base_path}/new_model")
 
@@ -71,12 +69,6 @@ def get_model(model_type, base_path):
 
 
 def predict(data, base_path, model_type="register"):
-    enc = load(f'{base_path}/encoder.joblib')
-    column_enc = list(enc.feature_names_in_)
-    df = pd.DataFrame(columns=column_enc)
-    df.loc[0] = data
-    df = enc.transform(df.astype(int).astype(str))
-    df = pd.DataFrame(df.toarray(), columns=enc.get_feature_names())
     model = tf.keras.models.load_model(f"{base_path}/{model_type}_model")
-    result = model.predict(df)
-    return result[0]
+    result = model.predict(data, verbose=0)
+    return float(result[0][0])
