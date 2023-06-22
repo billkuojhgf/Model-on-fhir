@@ -8,7 +8,6 @@ pima_diabetes,height,8302-2,http://loinc.org,observation,0007-00-00T00:00:00,,la
 pima_diabetes,pregnancies,0,,observation,0007-00-00T00:00:00,6,latest,,
 pima_diabetes,skinthickness,0,,observation,0007-00-00T00:00:00,35,latest,,
 pima_diabetes,diabetespedigreefunction,0,,observation,0007-00-00T00:00:00,0.627,latest,,
-pima_diabetes,hypertension,I10,,condition,0007-00-00T00:00:00,,latest,,
 pima_diabetes,age,,,patient,,,,age,
 qCSI,respiratory_rate,OA04,https://www.cgmh.org.tw,observation,0007-00-00T00:00:00,,latest,,
 qCSI,spo2,OA08,https://www.cgmh.org.tw,observation,0007-00-00T00:00:00,,latest,,

@@ -148,6 +148,19 @@ class GetLatest(GetFuncInterface):
         return {"date": data_date_list[0], "value": data_value_list[0]}
 
 
+class GetAll(GetFuncInterface):
+    def execute(self, data: dict) -> dict:
+        """
+        GetAll 的目的是取得所有的資料。
+        :param data:
+        :return:
+        """
+        data_date_list = data['date']
+        data_value_list = data['value']
+
+        return {"date": data_date_list, "value": data_value_list}
+
+
 class ResourceMgmt:
     """
     The Context defines the interface of interest to clients.

@@ -24,7 +24,7 @@ qCSI,spo2,category,5=lt|88,2
 qCSI,o2_flow_rate,category,0=le|2,3
 qCSI,o2_flow_rate,category,4=gt|2&le|4,3
 qCSI,o2_flow_rate,category,5=gt|4&le|6,3
-qCSI,o2_flow_rate,numeric,"",3
+qCSI,o2_flow_rate,numeric,,3
 pima_diabetes,glucose,numeric,,2
 pima_diabetes,diastolic_blood_pressure,numeric,,3
 pima_diabetes,insulin,numeric,,5

@@ -26,4 +26,4 @@ betel_nut_years=Observation.component.{code:coding.{code:"year"}}.valueCodeableC
 betel_nut_quit=Observation.component.{code:coding.{code:"quit"}}.valueCodeableConcept.coding.0.code
 alcohol_behavior=Observation.valueCodeableConcept.coding.0.code
 ssf=Observation.valueCodeableConcept.coding.0.code
-
+encounter_id=Condition.encounter.id

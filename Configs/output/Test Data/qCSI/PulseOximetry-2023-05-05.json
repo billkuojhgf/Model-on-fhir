@@ -1,7 +1,7 @@
 
 {
   "resourceType" : "Observation",
-  "id" : "oxygen-saturation3",
+  "id" : "oxygen-saturation1",
   "meta" : {
     "extension" : [
       {
@@ -57,9 +57,9 @@
   "subject" : {
     "reference" : "Patient/test-03121002"
   },
-  "effectiveDateTime" : "1999-07-02",
+  "effectiveDateTime" : "2023-05-05",
   "valueQuantity" : {
-    "value" : 97.0,
+    "value" : 86.0,
     "unit" : "%O2",
     "system" : "http://unitsofmeasure.org",
     "code" : "%"

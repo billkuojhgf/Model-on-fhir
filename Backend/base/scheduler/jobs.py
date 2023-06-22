@@ -20,7 +20,7 @@ def scheduled_jobs():
             "func": "base.scheduler.jobs:call_api",
             "args": [schedule["model_name"]],
             "trigger": "interval",
-            "next_run_time": datetime.now() + relativedelta(seconds=10),
+            # "next_run_time": datetime.now() + relativedelta(seconds=10),
             "days": interval_time_obj.get_days_from_now(),
             "hours": interval_time_obj.get_hours(),
             "minutes": interval_time_obj.get_minutes(),

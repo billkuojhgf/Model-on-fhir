@@ -1,7 +1,7 @@
 
 {
   "resourceType" : "Observation",
-  "id" : "fiO2-example",
+  "id" : "oxygen-saturation3",
   "meta" : {
     "extension" : [
       {
@@ -37,21 +37,31 @@
   "code" : {
     "coding" : [
       {
+        "system" : "https://www.cgmh.org.tw",
+        "code" : "OA08",
+        "display" : "Pulse Oximetry"
+      },
+      {
         "system" : "http://loinc.org",
-        "code" : "3151-8",
-        "display" : "Inhaled oxygen flow rate"
+        "code" : "2708-6",
+        "display" : "Oxygen saturation in Arterial blood"
+      },
+      {
+        "system" : "http://loinc.org",
+        "code" : "59408-5",
+        "display" : "Oxygen saturation in Arterial blood by Pulse oximetry"
       }
     ],
-    "text" : "Inhaled oxygen flow rate"
+    "text" : "oxygen_saturation"
   },
   "subject" : {
     "reference" : "Patient/test-03121002"
   },
-  "effectiveDateTime" : "1999-07-02",
+  "effectiveDateTime" : "2019-07-02",
   "valueQuantity" : {
-    "value" : 6,
-    "unit" : "liters/min",
+    "value" : 97.0,
+    "unit" : "%O2",
     "system" : "http://unitsofmeasure.org",
-    "code" : "L/min"
+    "code" : "%"
   }
 }

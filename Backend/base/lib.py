@@ -167,9 +167,17 @@ class Operation:
 
             var = self.variable.get_value()
 
+            if type(thres) == list:
+                # TODO: 這裡有沒有可能是要用all? 極大機率要改架構
+                return any(
+                    [getattr(operator, self.prefix)(transform_to_correct_type(var), transform_to_correct_type(t)) for t in thres]
+                )
+
             return getattr(operator, self.prefix)(transform_to_correct_type(var), transform_to_correct_type(thres))
         except KeyError:
             raise AttributeError(f"{self.prefix} is not a valid operator.")
+        except Exception:
+            return False
 
 
 class FilterOperation:

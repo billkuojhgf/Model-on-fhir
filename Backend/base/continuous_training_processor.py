@@ -228,11 +228,16 @@ def extract_value(value_and_datetime_of_patients_after_filter) -> dict:
     return return_data
 
 
-def resources_filter(value_and_datetime_of_patients, feature_table, filter_list) -> (dict, dict):
+def resources_filter(value_and_datetime_of_patients,
+                     predict_feature_table,
+                     training_feature_table,
+                     filter_list) -> (dict, dict):
     """
     Filter the resources by the filter list.
     :param value_and_datetime_of_patients:
-    :param temp_filter_list:
+    :param predict_feature_table:
+    :param training_feature_table:
+    :param filter_list:
     :return:
     """
     return_x_data = {}
@@ -255,11 +260,17 @@ def resources_filter(value_and_datetime_of_patients, feature_table, filter_list)
                 value_and_datetime_for_threshold_feature[threshold] = value_and_datetime_threshold
                 # get the value and datetime with the strategy defined in feature table
                 threshold = get_datetime_value_with_func(
-                    value_and_datetime_threshold, feature_table[threshold])
+                    value_and_datetime_threshold, training_feature_table[threshold])
                 threshold = threshold[obj.type]
 
                 # update the threshold to the object
                 obj.threshold = threshold
+
+        # Exclude the y data features that are not in the filter list
+        for feature_name in training_feature_table.keys():
+            if feature_name in value_and_datetime_of_patient.keys():
+                value_and_datetime_for_threshold_feature[feature_name] = \
+                    value_and_datetime_of_patient.pop(feature_name)
 
         for feature_name, value_and_datetime_of_features in value_and_datetime_of_patient.items():
             patient_separated_data[feature_name] = \
@@ -269,18 +280,18 @@ def resources_filter(value_and_datetime_of_patients, feature_table, filter_list)
         return_x_data[patient_id] = patient_separated_data
         return_y_data[patient_id] = value_and_datetime_for_threshold_feature
 
-    # get the value and datetime with the strategy defined in feature table
+    # get the value and datetime with the strategy (latest, max, min, etc) defined in feature table
     for patient_id, value_and_datetime_of_patient in return_x_data.items():
         for feature_name, value_and_datetime_of_features in value_and_datetime_of_patient.items():
             return_x_data[patient_id][feature_name] = \
                 get_datetime_value_with_func(
-                    value_and_datetime_of_features, feature_table[feature_name])
+                    value_and_datetime_of_features, predict_feature_table[feature_name])
 
     for patient_id, value_and_datetime_of_patient in return_y_data.items():
         for feature_name, value_and_datetime_of_features in value_and_datetime_of_patient.items():
             return_y_data[patient_id][feature_name] = \
                 get_datetime_value_with_func(
-                    value_and_datetime_of_features, feature_table[feature_name])
+                    value_and_datetime_of_features, training_feature_table[feature_name])
 
     return return_x_data, return_y_data
 
@@ -353,7 +364,9 @@ def transform_data(
             # 如果是y data, 需要將resource date 強制抓出，以為了後續剔除上次訓練過的資料
             y_datatime = None
             for feature_name, value_and_datetime_of_features in value_and_datetime_of_patient.items():
-                if value_and_datetime_of_features["date"] is None:
+                if value_and_datetime_of_features["date"] is None or \
+                        type(value_and_datetime_of_features["date"]) == list:
+                    # List means the y data is in getAll Strategy.
                     continue
                 if y_datatime is None:
                     y_datatime = transform_to_correct_type(

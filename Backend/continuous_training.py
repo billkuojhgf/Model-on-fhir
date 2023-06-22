@@ -97,7 +97,10 @@ def continuous_training_process(api):
 
 def update_status(process_id, start_thread: MyThread):
     result = start_thread.get_result()
-    model_name = result.get("model")
+    if result is None:
+        result = {"message": "Training process failed. Check the log for more details."}
+    else:
+        model_name = result.get("model")
 
     """
         What I thought is that we can use the process_id as the key to update the training status table.
@@ -134,7 +137,7 @@ def training_process(model_name):
     # And retry the provision process for 3 times if any other error occurs
     bulk_error_times = 0
     try:
-        bulk_server.content = "http://ming-desktop.ddns.net:8193/fhir/$export-poll-status?_jobId=2f138be8-c5a7-4c31-8c9a-8b358d14b9b8"
+        bulk_server.content = "http://ming-desktop.ddns.net:8193/fhir/$export-poll-status?_jobId=99b638cb-4803-457d-aeb5-76924c7c267f"
         bulk_server.provision()
     except HTTPError:
         print("Connection error. Trying to generate a new bulk request")
@@ -170,16 +173,17 @@ def training_process(model_name):
         data_with_separated_patient, code_dict)
 
     # Extract the value and datetime from the resources.
-    predict_and_training_feature_tables = \
-        feature_table.get_model_feature_dict(
-            model_name) | training_feature_table.get_model_feature_dict(model_name)
+    predict_feature_table = feature_table.get_model_feature_dict(model_name)
+    train_feature_table = training_feature_table.get_model_feature_dict(model_name)
+    predict_and_train_feature_tables = predict_feature_table | train_feature_table
     value_and_datetime_of_patients = extract_value_and_datetime(
-        data_with_separated_patient, predict_and_training_feature_tables)
+        data_with_separated_patient, predict_and_train_feature_tables)
 
     # Drop the resources that are not needed.
     x_value_and_datetime_of_patients_after_filter, y_value_and_datetime_of_patients_after_filter = resources_filter(
         value_and_datetime_of_patients,
-        predict_and_training_feature_tables,
+        predict_feature_table,
+        train_feature_table,
         training_sets.data_filter
     )
 
@@ -190,6 +194,8 @@ def training_process(model_name):
     transformed_y_data_of_patients = transform_data(training_model_feature_table,
                                                     y_value_and_datetime_of_patients_after_filter,
                                                     model_name, y_data=True)
+
+
 
     transformed_training_data = merge_transformed_data(transformed_x_data_of_patients,
                                                        transformed_y_data_of_patients)
@@ -203,7 +209,6 @@ def training_process(model_name):
     column = model_feature_table.get_model_feature_column(model_name) \
              + training_model_feature_table.get_model_feature_column(model_name)
     df = pd.DataFrame.from_dict(transformed_training_data, orient="index")
-    df.columns = column
     numbers_of_patients = len(df.index)
 
     # Check if the dataframe is empty
@@ -222,6 +227,9 @@ def training_process(model_name):
         training_status_table.write_new_data_into_csv(return_dict)
         lock.release()
         return return_dict
+
+    # Columns would be added after checking the dataframe is not empty
+    df.columns = column
 
     # First is to drop the rows that matches the condition we've set in the training_sets_table.
     df = drop_unuseful_rows(df, training_sets.null_value_strategy["drop"])

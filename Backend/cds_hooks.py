@@ -92,7 +92,7 @@ def generate_cds_card(patient_id, patient_data_dictionary, model_name) -> cds.Ca
     source = cds.Source(label="MoCab CDS Service",
                         url="https://www.mo-cab.dev",
                         icon="https://i.imgur.com/sFUFOyO.png")
-    suggestions = [cds.Suggestion(label="Suggestions", isRecommended=True)]
+    # suggestions = [cds.Suggestion(label="Suggestions", isRecommended=True)]
     if card_used is Card.CRITICAL:
         summary = f"Patient {patient_id} has a high risk of \"{model_name}\".\n"
         detail = f"{model_name} model captures a high risk. "
@@ -107,7 +107,7 @@ def generate_cds_card(patient_id, patient_data_dictionary, model_name) -> cds.Ca
     detail += f"""Model Score: {round(patient_data_dictionary['predict_value'], 2)}  
     More detail..."""
 
-    card = getattr(cds.Card, card_used.value)(summary, source, suggestions=suggestions, detail=detail)
+    card = getattr(cds.Card, card_used.value)(summary, source, detail=detail)
     card.add_link(cds.Link.smart(
         "MoCab-App",
         f"{conf.get('base_urls').get('BACKEND_URL')}{conf.get('base_urls').get('smart_prefix')}/launch"

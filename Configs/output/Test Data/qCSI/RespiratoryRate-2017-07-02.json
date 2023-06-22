@@ -1,6 +1,6 @@
 {
   "resourceType": "Observation",
-  "id": "respiratory-rate2",
+  "id": "respiratory-rate3",
   "status": "final",
   "category": [
     {
@@ -19,7 +19,7 @@
       {
         "system" : "https://www.cgmh.org.tw",
         "code" : "OA04",
-        "display" : "Respiratory rate"
+        "display" : "respiratory rate"
       },
       {
         "system": "http://loinc.org",
@@ -32,9 +32,9 @@
   "subject": {
     "reference": "Patient/test-03121002"
   },
-  "effectiveDateTime": "2020-09-21",
+  "effectiveDateTime": "2017-07-02",
   "valueQuantity": {
-    "value": 18,
+    "value": 12,
     "unit": "breaths/minute",
     "system": "http://unitsofmeasure.org",
     "code": "/min"

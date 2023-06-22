@@ -188,6 +188,7 @@ def category_handler(feature_name: str, formula: str, store_dict: dict, observer
                 variable_name = regex_result.group(1).strip("[]")
                 variable = store_dict[variable_name]
             else:
+                # 只有Feature name，沒有variable name
                 if feature_name in store_dict:
                     variable = store_dict[feature_name]
                 elif observer.callout_feature(feature_name):
@@ -204,10 +205,21 @@ def category_handler(feature_name: str, formula: str, store_dict: dict, observer
             # Threshold
             if regex_result.group(3):
                 threshold = regex_result.group(3)
+                if threshold.startswith('[') and threshold.endswith(']'):
+                    threshold = threshold.strip('[]')
+                    if threshold in store_dict:
+                        threshold = store_dict[threshold]
+                    elif observer.callout_feature(threshold):
+                        threshold = observer.callout_feature(threshold)
+                    else:
+                        threshold = NumericVariable(threshold, observer)
             else:
                 raise ValueError(f"Condition '{condition}' is not valid.")
         # 將Operation物件加入CategoryVariable物件中。
-        temp_variable.add_condition(Operation(variable, transform_to_correct_type(threshold), prefix))
+        if issubclass(type(threshold), BaseVariable):
+            temp_variable.add_condition(Operation(variable, threshold, prefix))
+        else:
+            temp_variable.add_condition(Operation(variable, transform_to_correct_type(threshold), prefix))
     return temp_variable
 
 
