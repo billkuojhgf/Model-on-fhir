@@ -318,7 +318,7 @@ def imputation_stategy(df: pd.DataFrame, null_value_strategy: dict) -> pd.DataFr
                 return_df[feature_name].median(), inplace=True, downcast="infer")
         elif strategy == "mode":
             return_df[feature_name].fillna(return_df[feature_name].mode()[
-                                           0], inplace=True, downcast="infer")
+                                               0], inplace=True, downcast="infer")
         elif type(transform_to_correct_type(strategy)) in [int, float]:
             return_df[feature_name].fillna(transform_to_correct_type(
                 default_strategy), inplace=True, downcast="infer")
@@ -334,7 +334,7 @@ def imputation_stategy(df: pd.DataFrame, null_value_strategy: dict) -> pd.DataFr
     elif default_strategy == "mode":
         for feature_name in return_df.columns:
             return_df[feature_name].fillna(return_df[feature_name].mode()[
-                                           0], inplace=True, downcast="infer")
+                                               0], inplace=True, downcast="infer")
     elif type(transform_to_correct_type(default_strategy)) in [int, float]:
         return_df.fillna(transform_to_correct_type(
             default_strategy), inplace=True, downcast="infer")
@@ -452,8 +452,14 @@ def model_evaluation(register_model, new_model, x_test, y_test) -> dict:
     :param y_test:
     :return: {
         "accuracy": {
-            "register_model": 0.9,
-            "new_model": 0.8
+            "register_model": {
+                "score": 0.9,
+                "best_threshold": 0.5
+            },
+            "new_model": {
+                "score": 0.8,
+                "best_threshold": 0.7
+            },
         },...
     }
 
@@ -476,8 +482,8 @@ def model_evaluation(register_model, new_model, x_test, y_test) -> dict:
 
     for key in reg_validate_result.keys():
         return_dict[key] = {
-            "register_model": round(reg_validate_result[key], 3),
-            "new_model": round(new_validate_result[key], 3)
+            "register_model": reg_validate_result[key],
+            "new_model": new_validate_result[key]
         }
 
     return return_dict
@@ -486,38 +492,55 @@ def model_evaluation(register_model, new_model, x_test, y_test) -> dict:
 def evaluating(y_perd, y_actual):
     """
     Evaluate the performance of the model.
-    :param y_perd:
-    :param y_actual:
+    :param y_perd: predicted result
+    :param y_actual: answer
     :return:
+     {
+        "auroc": {"score": , "best_threshold": }
+     }
     """
+    return_dict = {'auroc': calculate_best_threshold(y_perd, y_actual, "auroc"),
+                   'accuracy': calculate_best_threshold(y_perd, y_actual, "accuracy"),
+                   'precision': calculate_best_threshold(y_perd, y_actual, "precision"),
+                   'recall': calculate_best_threshold(y_perd, y_actual, "recall"),
+                   'f1_score': calculate_best_threshold(y_perd, y_actual, "f1_score")}
+
+    return return_dict
+
+
+def calculate_best_threshold(y_pred, y_actual, method="auroc"):
     return_dict = {}
-    # Calculate the auroc
-    return_dict['auroc'] = roc_auc_score(y_actual, y_perd)
-
-    # Find the best threshold
-    fpr, tpr, thresholds = roc_curve(y_actual, y_perd)
-    # Calculate the best threshold
-    best_threshold = thresholds[np.argmax(tpr - fpr)]
-    return_dict['best_threshold'] = best_threshold
-
-    # Flatten the y_perd while it's a 2d array
-    if len(y_perd.shape) > 1:
-        y_perd_flat = y_perd.flatten()
-        y_perd_flat = [1 if y >= best_threshold else 0 for y in y_perd_flat]
+    if method == "auroc":
+        # Calculate the auroc
+        score = roc_auc_score(y_actual, y_pred)
+        # Find the best threshold
+        fpr, tpr, thresholds = roc_curve(y_actual, y_pred)
+        # Calculate the best threshold
+        best_threshold = thresholds[np.argmax(tpr - fpr)]
     else:
-        y_perd_flat = [1 if y >= best_threshold else 0 for y in y_perd]
+        thresholds = np.linspace(0, 1, 100)  # Define a range of threshold values
+        best_threshold = None
+        score = -1
 
-    # Calculate the accuracy
-    return_dict['accuracy'] = accuracy_score(y_actual, y_perd_flat)
-    # Calculate the precision
-    return_dict['precision'] = precision_score(y_actual, y_perd_flat)
-    # Calculate the recall
-    return_dict['recall'] = recall_score(y_actual, y_perd_flat)
-    # Calculate the f1 score
-    return_dict['f1_score'] = f1_score(y_actual, y_perd_flat)
+        for threshold in thresholds:
+            y_result = (y_pred >= threshold).astype(int)  # Convert probabilities to binary predictions
+            if method == "f1_score":
+                temp_score = f1_score(y_actual, y_result)
+            elif method == "precision":
+                temp_score = precision_score(y_actual, y_result)
+            elif method == "recall":
+                temp_score = recall_score(y_actual, y_result)
+            elif method == "accuracy":
+                temp_score = accuracy_score(y_actual, y_result)
+            else:
+                raise ValueError("The method is not supported.")
 
-    # convert values in return_dict to float due to the exceptions from jsonify
-    return_dict = {k: float(v) for k, v in return_dict.items()}
+            if temp_score > score:
+                score = temp_score
+                best_threshold = threshold
+
+    return_dict['best_threshold'] = float(best_threshold)
+    return_dict['score'] = round(float(score), 3)
     return return_dict
 
 

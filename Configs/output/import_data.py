@@ -8,9 +8,9 @@ import json
 def main(url, path):
     folders = os.listdir(path)
     # Exclude IDE folders
-    folders.pop(".vscode")
-    folders.pop(".idea")
-    folders.pop(".git")
+    folders.remove(".vscode")
+    folders.remove(".idea")
+    # folders.remove(".git")
     # Move Test Data folder to the end
     folders.remove("Test Data")
     folders.append("Test Data")

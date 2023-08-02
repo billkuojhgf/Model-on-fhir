@@ -28,6 +28,7 @@ class _FhirClassObject:
     def client(self, default_client=False):
         if default_client:
             return self._default_client
+
         try:
             return self._default_client if self._client is None else self._client
         except AttributeError:

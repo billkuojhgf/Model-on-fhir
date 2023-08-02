@@ -261,8 +261,14 @@ def training_process(model_name):
 
     # Save the model
     validate_method = training_sets.training_config["validate_method"]
-    evaluate_result = evaluate[validate_method]
-    threshold = evaluate['best_threshold']
+    evaluate_result = {
+        "register_model": evaluate[validate_method]['register_model']["score"],
+        "new_model": evaluate[validate_method]['new_model']["score"],
+    }
+    threshold = {
+        "register": evaluate[validate_method]['register_model']["best_threshold"],
+        "new": evaluate[validate_method]['new_model']["best_threshold"],
+    }
 
     if evaluate_result['register_model'] > evaluate_result['new_model']:
         chosed_model = "register"
@@ -284,7 +290,7 @@ def training_process(model_name):
         "old_model_evaluate": evaluate_result['register_model'],
         "new_model_evaluate": evaluate_result['new_model'],
         "register_model": chosed_model,
-        "threshold": threshold[f'{chosed_model}_model']
+        "threshold": threshold[f'{chosed_model}']
     }
 
     training_status_table.write_new_data_into_csv(return_dict)
