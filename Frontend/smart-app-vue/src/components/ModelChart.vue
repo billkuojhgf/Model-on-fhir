@@ -1,6 +1,6 @@
 <template>
   <!-- v-on:valueChange is a label from LineChart $emit   -->
-  <h1 style="margin-bottom: 10px">{{ title }}</h1>
+  <h1 style="margin-bottom: 10px">{{ title.replaceAll("_", " ") }}</h1>
   <div
     class="lineChartSetsClass"
   >
@@ -57,6 +57,7 @@ export default {
       }
       count++;
     }
+
 
     if (featureObj === undefined)
       return

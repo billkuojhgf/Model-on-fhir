@@ -7,7 +7,7 @@
       />
     </div>
     <div class="chartLabelClass">
-      <label>{{ title.replaceAll("_", " ") }}</label>
+      <label style="font-size: 22px">{{ title.replaceAll("_", " ") }}</label>
       <div
           class="divInputClass"
           v-if="featureObj[title]['type_of_data'] === 'observation' || featureObj[title]['type_of_data'] === 'patient'"
@@ -79,7 +79,7 @@ export default {
           legend: {
             labels: {
               font: {
-                size: 16
+                size: 25
               }
             }
           },

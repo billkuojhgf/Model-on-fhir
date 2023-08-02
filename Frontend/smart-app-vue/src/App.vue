@@ -4,8 +4,9 @@
   <div id="mainDiv">
     <div id="divChart">
       <div>
-        <label for="since-time">Since Datetime: </label>
+        <label for="since-time" style="font-size: 25px">Since Datetime: </label>
         <input
+            style="font-size: 25px"
             id="setMinDateTime"
             v-model="minDate"
             name="since-time"
@@ -87,7 +88,8 @@ export default {
       return this.$store.state.modelFeatureArray
     },
     getCurrentModelObject() {
-      let obj = null
+      let obj = {}
+      obj.score = 0
       for(const arr of this.$store.state.modelFeatureArray){
         if(arr.name === this.type)
           obj = arr
@@ -124,11 +126,20 @@ export default {
         })
         .catch(error => console.log(error))
 
+    let uri = window.location.search.substring(1);
+    let params = new URLSearchParams(uri);
+    if (params.has('id')) {
+      this.$store.commit('changePatientId', params.get('id'))
+    } else {
+      console.log("patient_id is not in the parameter, using default patient 'test-03121002' instead. ")
+    }
+
+
     for (const available_model of model_list) {
       featureCollectObject = {}
       featureCollectObject.name = available_model
-      featureCollectObject.resources = await getData('test-03121002', available_model)
-      featureCollectObject.score = null
+      featureCollectObject.resources = await getData(this.$store.state.patient_id, available_model)
+      featureCollectObject.score = 0
       modelFeatureArray.push(featureCollectObject)
     }
     console.log(modelFeatureArray)
@@ -147,6 +158,7 @@ img {
 }
 
 h2 {
+  font-size: 25px;
   text-align: left;
 }
 

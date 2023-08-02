@@ -5,7 +5,7 @@ const getResourceDatetimeAndValue = async function (patient_id, model_name) {
     return axios({
         method: 'get',
         baseURL: store.state.base,
-        url: `/smart/${model_name}?id=${patient_id}`,
+        url: `/${store.state.base_prefix}/${model_name}?id=${patient_id}`,
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
     }).then(response => {
