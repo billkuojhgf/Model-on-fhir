@@ -19,7 +19,7 @@ def config(base_path):
 
 def encode(x, y, base_path):
     """
-    Function encode會將資料轉譯成model prefer的category
+    Function encode will transform data into model preferred category
     """
     try:
         enc = load(f'{base_path}/encoder.joblib')
