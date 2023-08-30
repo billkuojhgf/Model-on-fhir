@@ -1,6 +1,4 @@
 import reprlib
-import re
-import json
 
 
 def get_by_path(data, path, default=None):
@@ -53,46 +51,83 @@ def get_by_path(data, path, default=None):
         return default
 
 
+def bracket_handler(route) -> dict:
+    """
+    Handle the route with brackets.
+    """
+    temp_dict = {}
+    route = route[1:-1]
+    route_separate = route.split(",")
+    bracket_stack = []
+    real_route = []
+    start, end = -1, -1
+
+    for index, sub_route in enumerate(route_separate):
+        for i in range(sub_route.count("{")):
+            bracket_stack.append("{")
+            if start == -1:
+                start = index
+
+        for i in range(sub_route.count("}")):
+            bracket_stack.pop()
+
+        if len(bracket_stack) == 0:
+            if start != -1:
+                end = index
+                real_route.append(",".join(route_separate[start:end + 1]))
+                start, end = -1, -1
+            else:
+                real_route.append(sub_route)
+
+    for index, sub_route in enumerate(real_route):
+        key = sub_route.split(":")[0].strip()
+        value = ":".join(sub_route.split(":")[1:]).strip()
+        if value.startswith('"'):
+            value = value[1:-1]
+            temp_dict[key] = value
+        elif value.startswith("{"):
+            temp_dict[key] = parse_route(value)[0]
+        else:
+            temp_dict[key] = parse_route(value)
+
+    return temp_dict
+
+
 def parse_route(route):
     """
     Parse a route string into a list of keys and/or dictionaries.
     """
-    RE = r'("\w+"|\{.*\})|(\d+)(?=\.|$)'
-    temp_result = []
 
-    for key in re.findall(RE, route):
-        if key[0] != '':
-            key = key[0]
-        elif key[1] != '':
-            key = int(key[1])
-            temp_result.append(key)
-            continue
-        else:
-            raise ValueError("Invalid route: {}".format(route))
+    route_separate = route.split(".")
+    brackets_stack = []
+    start, end = -1, -1
+    real_route = []
 
-        if key.startswith("{"):
-            temp_dict = {}
-            if "." in re.sub(r'"[^"]*"', '', key):
-                # if "." was in {}, means the value is in complex type.
-                # e.g. {a:b.c.d} -> {"a": [b, c, {d: "e"}]}
-                # Therefore, we need to parse the value recursively to get the actual route.
-                temp_dict[key[1:-1].split(":")[0].strip()] = parse_route(":".join(key[1:-1].split(":")[1:]))
+    for index, sub_route in enumerate(route_separate):
+        for i in range(sub_route.count("{")):
+            brackets_stack.append("{")
+            if start == -1:
+                start = index
+
+        for i in range(sub_route.count("}")):
+            brackets_stack.pop()
+
+        if len(brackets_stack) == 0:
+            if start != -1:
+                end = index
+                real_route.append(".".join(route_separate[start:end + 1]))
+                start, end = -1, -1
             else:
-                value = ":".join(key[1:-1].split(":")[1:]).strip()
-                temp_dict[key[1:-1].split(":")[0].strip()] = json.loads(value) if "{" in value else value
-            temp_result.append(temp_dict)
-        else:
-            temp_result.append(key)
-    result = []
-    for temp in temp_result:
-        if isinstance(temp, dict):
-            temp_dict = {}
-            for k, v in temp.items():
-                temp_dict[k.replace('\"', "")] = v.replace('\"', "") if isinstance(v, str) else v
-            result.append(temp_dict)
+                real_route.append(sub_route)
 
-        elif isinstance(temp, str):
-            result.append(temp.replace("\"", ""))
-        else:
-            result.append(temp)
-    return result
+    for index, sub_route in enumerate(real_route):
+        if sub_route.startswith("{") and sub_route.endswith("}"):
+            real_route[index] = bracket_handler(sub_route)
+
+    for index, sub_route in enumerate(real_route):
+        try:
+            real_route[index] = int(sub_route)
+        except (ValueError, TypeError):
+            pass
+
+    return real_route

@@ -1,5 +1,6 @@
 import pytest
 from base.model_input_transformer import transformer
+from base.object_store import model_feature_table
 
 test_list = [(
     {
@@ -136,4 +137,4 @@ test_list = [(
 
 @pytest.mark.parametrize("test_input, test_model, expected", test_list)
 def test_transformer(test_input, test_model, expected):
-    assert transformer(test_input, test_model) == expected
+    assert transformer(model_feature_table, test_input, test_model) == expected

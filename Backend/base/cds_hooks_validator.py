@@ -3,7 +3,7 @@ import enum
 from base import search_sets
 from fhirpy.lib import SyncFHIRResource
 from base.object_store import fhir_resources_route, cds_hooks_config_table
-from base.model_input_transformer import validation
+from base.route_converter import get_by_path
 
 
 class Card(enum.Enum):
@@ -34,15 +34,23 @@ def extract_resource(resource_type: str, fhir_resource: SyncFHIRResource, extrac
         resource_obj = getattr(search_sets, resource_type)
         value = getattr(resource_obj, extract_methods[-1].replace("()", ""))(fhir_resource)
     else:
-        value = fhir_resource.get_by_path(extract_methods)
+        value = get_by_path(fhir_resource, extract_methods)
 
     return value
+
+
+def validation(value, **kwargs):
+    return getattr(operator, kwargs['prefix'])(value, kwargs['condition'])
 
 
 def model_evaluating(model_name: str,
                      patient_resource: SyncFHIRResource,
                      encounter_resource: SyncFHIRResource) -> bool:
-    cds_hooks_config = cds_hooks_config_table.get_cds_hooks_table_dict(model_name)
+    try:
+        cds_hooks_config = cds_hooks_config_table.get_cds_hooks_table_dict(model_name)
+    except KeyError:
+        return False
+
     # If the condition is empty, always calculate it.
     if len(cds_hooks_config["condition"]) == 0:
         return True
@@ -64,10 +72,7 @@ def model_evaluating(model_name: str,
 
         # Compare the value with conditions. If value doesn't match conditions, return False instead.
         for transformer in value_list:
-            valid = validation(value=value,
-                               func=lambda val, kwargs: getattr(operator, kwargs['prefix'])(val, kwargs['condition']),
-                               prefix=transformer['prefix'],
-                               condition=transformer["condition"])
+            valid = validation(value, **transformer)
             if not valid:
                 return False
     return True
@@ -75,10 +80,7 @@ def model_evaluating(model_name: str,
 
 def match_conditions(value, value_list) -> bool:
     for transformer in value_list:
-        valid = validation(value=value,
-                           func=lambda val, kwargs: getattr(operator, kwargs['prefix'])(val, kwargs['condition']),
-                           prefix=transformer['prefix'],
-                           condition=transformer["condition"])
+        valid = validation(value, **transformer)
         if not valid:
             return False
     return True

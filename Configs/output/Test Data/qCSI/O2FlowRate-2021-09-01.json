@@ -1,7 +1,7 @@
 
 {
   "resourceType" : "Observation",
-  "id" : "fiO2-example4",
+  "id" : "flowrate-example2",
   "meta" : {
     "extension" : [
       {

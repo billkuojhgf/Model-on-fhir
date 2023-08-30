@@ -7,6 +7,11 @@ import json
 
 def main(url, path):
     folders = os.listdir(path)
+    # Exclude IDE folders
+    folders.remove(".vscode")
+    folders.remove(".idea")
+    # folders.remove(".git")
+    # Move Test Data folder to the end
     folders.remove("Test Data")
     folders.append("Test Data")
     for folder_name in folders:
@@ -38,6 +43,8 @@ def create_resource(
     session = requests.session()
     for fname in os.listdir(path):
         input_file = open(os.path.join(path, fname), encoding="utf-8")
+        if not fname.endswith(".json"):
+            continue
         try:
             json_dict = json.load(input_file)
         except Exception as e:
@@ -45,7 +52,11 @@ def create_resource(
             raise e
         id = None
 
-        resources = json_dict['resourceType']
+        try:
+            resources = json_dict['resourceType']
+        except KeyError:
+            print(json_dict)
+            raise KeyError
         try:
             id = json_dict['id']
         except KeyError:

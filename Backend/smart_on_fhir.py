@@ -3,6 +3,8 @@ from flask import request, redirect, abort, jsonify
 from flask import Blueprint
 from base import patient_data_search as ds
 from base.object_store import feature_table
+from base.object_store import fhir_class_obj
+from config import configObject as conf
 
 smart_clientObj: FHIRClient
 smart_app = Blueprint('smart_on_fhir', __name__)
@@ -15,8 +17,8 @@ def smart_api_with_id(api):
     if patient_id is None:
         abort(400, description="Please fill in patient's ID.")
 
-    if not check_auth():
-        abort(401, description="SMART Auth is not enabled. Launch MoCab SMART Endpoint in EHR First.")
+    # if not check_auth():
+    #     abort(401, description="SMART Auth is not enabled. Launch MoCab SMART Endpoint in EHR First.")
 
     patient_data_dict = ds.smart_model_feature_search_with_patient_id(
         patient_id, table.get_model_feature_dict(api))
@@ -31,7 +33,7 @@ def smart_launch():
     settings = {
         'app_id': 'mocab_app',
         'api_base': request.values.get("iss"),
-        'redirect_uri': f"http://{request.host}/fhir-app",
+        'redirect_uri': f"{conf.get('base_urls').get('BACKEND_URL')}{conf.get('base_urls').get('smart_prefix')}/fhir-app",
         'scope': " ".join(["patient/*.read", "launch"])
     }
     smart_clientObj = FHIRClient(settings=settings)
@@ -46,7 +48,14 @@ def callback():
         smart_clientObj.handle_callback(request.url)
     except Exception as e:
         return f"""<h1>Authorization Error</h1><p>{e}</p><p><a href="/">Start over</a></p>"""
-    return "Authorized"
+    if check_auth():
+        fhir_class_obj.update_client(url=smart_clientObj.server.base_uri,
+                                     authorization=f"bearer {smart_clientObj.server.auth.access_token}")
+        print(smart_clientObj.__dict__)
+        print(smart_clientObj.server.__dict__)
+        print(smart_clientObj.server.auth.__dict__)
+        return redirect(f"{conf.get('base_urls').get('FRONTEND_URL')}")
+    return "Not Authorized"
 
 
 def check_auth():

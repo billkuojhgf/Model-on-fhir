@@ -11,7 +11,7 @@ class FHIRAuthorization:
     # https://cds-hooks.org/specification/current/#fhir-resource-access
     access_token: str  # REQUIRED:	string	This is the OAuth 2.0 access token that provides access to the FHIR server.
     token_type: str  # expires_in	REQUIRED	Fixed value: Bearer
-    expires_in: str  # REQUIRED	integer	The lifetime in seconds of the access token.
+    expires_in = None  # REQUIRED	integer	The lifetime in seconds of the access token.
     scope: str  # REQUIRED	string	The scopes the access token grants the CDS Service.
     subject: str  # REQUIRED	string	The OAuth 2.0 client identifier of the CDS Service, as registered with the CDS Client's authorization server.
 
