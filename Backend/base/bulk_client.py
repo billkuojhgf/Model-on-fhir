@@ -12,7 +12,7 @@ import requests
 
 
 # Fixed variables
-COMMAND = '/Patient/$export'
+COMMAND = '/$export'
 RESOURCES = [
     "Patient",
     "Group"
@@ -57,6 +57,7 @@ class BulkDataClient(object):
 
     def provision(self, compartment=None, **query_params):
         # TODO 3 options: /$export, /Group/[id]/$export, /Patient/$export
+        retry_time = 0
         params = {
             k: v for (k, v) in query_params.items()
             if k in VALID_QUERY_PARAMS
@@ -72,9 +73,24 @@ class BulkDataClient(object):
             # TODO backoff
             # TODO would be a good place for asyncio
             sleep(0.5)
-            response = self._issue(content)
+            try:
+                response = self._issue(content)
+            except requests.exceptions.ReadTimeout as e:
+                if retry_time > 15:
+                    print("Retry times exceeded 10, aborting...")
+                    raise e
+
+                retry_time += 1
+                print(f"Request timed out, retrying... \nTried times: {retry_time}")
+                continue
+
             if response.status_code == 200:
                 self.manifest = MANIFEST_URLS.search(response.json())
+                try:
+                    with open('manifest.json', 'w+') as f:
+                        json.dump(self.manifest, f)
+                except Exception as e:
+                    print(e)
                 return
 
     def iter_ndjson_dict(self) -> {str: list} or None:
@@ -96,6 +112,7 @@ class BulkDataClient(object):
 
 
 if __name__ == "__main__":
+    print("starting...")
     bulk_server = BulkDataClient()
     bulk_server.provision()
     ndj = bulk_server.iter_ndjson_dict()

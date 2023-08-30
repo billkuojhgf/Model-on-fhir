@@ -1,5 +1,5 @@
 ### Send POST request with integer type of o2 flow rate value
-POST http://localhost:5001/cds-services/MoCab-CDS-Service
+POST http://localhost:5000/cds-hooks/cds-services/MoCab-CDS-Service
 Content-Type: application/json
 
 {
