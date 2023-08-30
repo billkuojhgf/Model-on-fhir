@@ -1,14 +1,14 @@
 import os
-
-from mask import mask
-from app import app
-from app import import_model
+from app import mocab_app
 from flask_cors import CORS
+from config import configObject as conf
+from base.scheduler.jobs import Config
+from flask_apscheduler import APScheduler
 
 
 def init_models():
     names = []
-    model_path = r"./models"
+    model_path = r"mocab_models"
     for model_path_dir in os.listdir(model_path):
         # 阻絕 "__pycache__" folder
         if model_path_dir.startswith("_"):
@@ -27,14 +27,20 @@ def init_models():
                 os.path.exists("{}/{}/model.py".format(model_path, model_path_dir)):
             names.append(model_path_dir)
 
-    models_init_file = open("./models/__init__.py", "w")
+    models_init_file = open("mocab_models/__init__.py", "w")
     models_init_file.write("__all__ = {}\n".format(names))
     models_init_file.close()
 
 
 if __name__ == '__main__':
-    mask()
     init_models()
-    CORS(app)
-    app.debug = True
-    app.run()
+    mocab_app.config.from_object(Config)
+
+    scheduler = APScheduler()
+    scheduler.init_app(mocab_app)
+    scheduler.start()
+
+    CORS(mocab_app)
+    port = conf.get("flask_config").get("PORT")
+    debug = conf.get("flask_config").get("DEBUG")
+    mocab_app.run(port=port, debug=debug, use_reloader=False)

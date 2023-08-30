@@ -1,11 +1,12 @@
-from flask import Flask, json, request
+from flask import Flask, json, request, Blueprint
 from flask_cors import CORS
 
-flaskApp = Flask(__name__)
+# flaskApp = Flask(__name__)
+flaskApp = Blueprint('cds_hooks', __name__)
 
 
 def init(app):
-    CORS(flaskApp)
+    # CORS(flaskApp)
 
     @flaskApp.route("/")
     def hello_world():
@@ -26,7 +27,3 @@ def init(app):
             return "client error", 400
 
     return flaskApp
-
-
-def serve(**kwargs):
-    flaskApp.run(**kwargs)

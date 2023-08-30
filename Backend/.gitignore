@@ -36,6 +36,10 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+
+# ignore debug logcat
+MoCab_DEBUG_logcat.*
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
